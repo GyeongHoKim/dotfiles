@@ -1,2 +1,7 @@
 # dotfiles
-dotfiles for Gyeongho Workspace
+
+This repository contains my personal dotfiles. Use GNU Stow to install them:
+
+```bash
+stow */
+```
