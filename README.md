@@ -1,9 +1,38 @@
 # dotfiles
 
-This repository contains my personal dotfiles. Use GNU Stow to install them:
+This repository contains my personal dotfiles. Each tool has different installation methods:
+
+## 📁 Installation
+
+### stow
+
+this configs can be installed using [GNU Stow](https://www.gnu.org/software/stow/).
+
+- nvim
 
 ```bash
-stow */
+# Install specific configurations
+stow nvim    # Neovim configuration
+```
+
+### Oh My Zsh (requires special setup)
+
+**Step 1**: Install Oh My Zsh and plugins
+
+```bash
+./setup-zsh.sh
+```
+
+**Step 2**: Link the configuration using stow
+
+```bash
+stow zsh
+```
+
+**Step 3**: Restart your terminal or source the config
+
+```bash
+source ~/.zshrc
 ```
 
 ## Known Issues
