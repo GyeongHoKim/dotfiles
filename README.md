@@ -35,6 +35,14 @@ stow zsh
 source ~/.zshrc
 ```
 
+### Node Version Manager (nvm)
+
+needed env variables are already in .zshrc file.
+
+```bash
+./setup-nvm.sh
+```
+
 ## Known Issues
 
 ### ESLint LSP Server
