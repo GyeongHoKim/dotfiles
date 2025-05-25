@@ -1,51 +1,48 @@
 # dotfiles
 
-This repository contains my personal dotfiles. Each tool has different installation methods:
+This repository contains my personal dotfiles managed with [dotbot](https://github.com/anishathalye/dotbot).
 
 ## 📁 Installation
 
-### LazyVim
+### Quick Setup
 
-Step 1: Install Prerequisites
+Run the install script to set up all dotfiles and dependencies:
 
+```bash
+./install
+```
+
+This will:
+- Install LazyVim prerequisites
+- Set up Oh My Zsh and plugins
+- Install Node Version Manager (nvm)
+- Link all configuration files to their proper locations
+- Source the zsh configuration
+
+### Manual Setup Steps
+
+If you prefer to run steps individually:
+
+#### LazyVim
 ```bash
 ./setup-lazyvim.sh
 ```
 
-Step 2: configure Neovim
-
-```bash
-# Install specific configurations
-stow nvim    # Neovim configuration
-```
-
-### Oh My Zsh (requires special setup)
-
-**Step 1**: Install Oh My Zsh and plugins
-
+#### Oh My Zsh
 ```bash
 ./setup-zsh.sh
 ```
 
-**Step 2**: Link the configuration using stow
-
-```bash
-stow zsh
-```
-
-**Step 3**: Restart your terminal or source the config
-
-```bash
-source ~/.zshrc
-```
-
-### Node Version Manager (nvm)
-
-needed env variables are already in .zshrc file.
-
+#### Node Version Manager (nvm)
 ```bash
 ./setup-nvm.sh
 ```
+
+### What Gets Linked
+
+- `~/.zshrc` → zsh configuration with oh-my-zsh setup
+- `~/.config/nvim/` → LazyVim-based Neovim configuration
+- `~/.config/mcphub/` → MCP Hub configuration
 
 ## Known Issues
 
