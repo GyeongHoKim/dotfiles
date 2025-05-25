@@ -4,11 +4,15 @@ This repository contains my personal dotfiles. Each tool has different installat
 
 ## 📁 Installation
 
-### stow
+### LazyVim
 
-this configs can be installed using [GNU Stow](https://www.gnu.org/software/stow/).
+Step 1: Install Prerequisites
 
-- nvim
+```bash
+./setup-lazyvim.sh
+```
+
+Step 2: configure Neovim
 
 ```bash
 # Install specific configurations
