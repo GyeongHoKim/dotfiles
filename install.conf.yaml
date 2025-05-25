@@ -1,0 +1,29 @@
+- defaults:
+    link:
+      relink: true
+      create: true
+
+- clean: ['~']
+
+- link:
+    ~/.zshrc: zsh/.zshrc
+    ~/.config/nvim: nvim/.config/nvim
+    ~/.config/mcphub: nvim/.config/mcphub
+
+- shell:
+    - description: Setup LazyVim prerequisites
+      command: ./setup-lazyvim.sh
+      stdout: true
+      stderr: true
+    - description: Setup Oh My Zsh and plugins
+      command: ./setup-zsh.sh
+      stdout: true
+      stderr: true
+    - description: Setup Node Version Manager
+      command: ./setup-nvm.sh
+      stdout: true
+      stderr: true
+    - description: Source zsh configuration
+      command: source ~/.zshrc || true
+      stdout: true
+      stderr: true
