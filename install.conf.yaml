@@ -5,25 +5,48 @@
 
 - clean: ['~']
 
+# Platform-specific linking
 - link:
-    ~/.zshrc: zsh/.zshrc
-    ~/.config/nvim: nvim/.config/nvim
-    ~/.config/mcphub: nvim/.config/mcphub
+    # Unix systems
+    ~/.zshrc:
+      path: zsh/.zshrc
+      if: '[ ! "$OS" = "Windows_NT" ]'
+    ~/.config/nvim:
+      path: nvim/.config/nvim
+      if: '[ ! "$OS" = "Windows_NT" ]'
+    ~/.config/mcphub:
+      path: nvim/.config/mcphub
+      if: '[ ! "$OS" = "Windows_NT" ]'
 
+# Shell commands for Unix systems only
 - shell:
-    - description: Setup LazyVim prerequisites
-      command: ./setup-lazyvim.sh
+    - command: ./setup-lazyvim.sh
+      description: Setup LazyVim prerequisites
       stdout: true
       stderr: true
-    - description: Setup Oh My Zsh and plugins
-      command: ./setup-zsh.sh
+      if: '[ ! "$OS" = "Windows_NT" ]'
+    - command: ./setup-zsh.sh
+      description: Setup Oh My Zsh and plugins
       stdout: true
       stderr: true
-    - description: Setup Node Version Manager
-      command: ./setup-nvm.sh
+      if: '[ ! "$OS" = "Windows_NT" ]'
+    - command: ./setup-nvm.sh
+      description: Setup Node Version Manager
       stdout: true
       stderr: true
-    - description: Source zsh configuration
-      command: source ~/.zshrc || true
+      if: '[ ! "$OS" = "Windows_NT" ]'
+    - command: source ~/.zshrc || true
+      description: Source zsh configuration
+      stdout: true
+      stderr: true
+      if: '[ ! "$OS" = "Windows_NT" ]'
+    
+    # Windows detection message
+    - command: |
+        if [ "$OS" = "Windows_NT" ]; then
+          echo "Windows detected! Please run install.bat or install.ps1 instead."
+          exit 1
+        fi
+      description: Check for Windows
       stdout: true
       stderr: true

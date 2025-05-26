@@ -1,4 +1,22 @@
+# macOS
 .DS_Store
+
+# Windows
+Thumbs.db
+Desktop.ini
+*.exe
+
+# Editor
 *.swp
 *~
 .stow-local-ignore
+
+# Go build artifacts
+cmd/dotfiles-installer
+cmd/dotfiles-installer.exe
+cmd/go.sum
+
+# User-specific files
+.env_vars
+.env_vars.ps1
+.dotfiles_tips_shown
