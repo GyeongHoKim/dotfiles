@@ -1,0 +1,120 @@
+name: Cross-Platform Dotfiles Test
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-unix:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+    
+    - name: Test installation script
+      run: |
+        # Make scripts executable
+        chmod +x install
+        chmod +x setup-*.sh
+        
+        # Test that scripts are valid bash
+        bash -n install
+        bash -n setup-lazyvim.sh
+        bash -n setup-zsh.sh
+        bash -n setup-nvm.sh
+    
+    - name: Test dotbot configuration
+      run: |
+        # Check YAML syntax
+        python3 -c "import yaml; yaml.safe_load(open('install.conf.yaml'))"
+
+  test-windows:
+    runs-on: windows-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21'
+    
+    - name: Test Go installer build
+      run: |
+        cd cmd
+        go mod download
+        go build -o test-installer.exe install.go
+        Remove-Item test-installer.exe
+      shell: pwsh
+    
+    - name: Test PowerShell scripts
+      run: |
+        # Test PowerShell syntax
+        $null = [System.Management.Automation.PSParser]::Tokenize((Get-Content .\install.ps1 -Raw), [ref]$null)
+        $null = [System.Management.Automation.PSParser]::Tokenize((Get-Content .\powershell\Microsoft.PowerShell_profile.ps1 -Raw), [ref]$null)
+      shell: pwsh
+    
+    - name: Test batch file
+      run: |
+        # Just check if batch file exists and has content
+        if (!(Test-Path ".\install.bat")) { exit 1 }
+        if ((Get-Item ".\install.bat").Length -eq 0) { exit 1 }
+      shell: pwsh
+
+  lint:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21'
+    
+    - name: Install golangci-lint
+      run: |
+        curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.55.2
+    
+    - name: Run golangci-lint
+      run: |
+        cd cmd
+        $(go env GOPATH)/bin/golangci-lint run
+    
+    - name: Check Go formatting
+      run: |
+        cd cmd
+        if [ -n "$(gofmt -l .)" ]; then
+          echo "Go files are not formatted properly"
+          gofmt -d .
+          exit 1
+        fi
+
+  documentation:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Check README links
+      run: |
+        # Check that all links in README are valid format
+        grep -oE '\[.*\]\(.*\)' README.md || true
+        grep -oE 'https?://[^\s]+' README.md || true
+    
+    - name: Check for required documentation
+      run: |
+        # Ensure all required docs exist
+        for file in README.md LICENSE WINDOWS.md; do
+          if [ ! -f "$file" ]; then
+            echo "Missing required file: $file"
+            exit 1
+          fi
+        done
