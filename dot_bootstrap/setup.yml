@@ -24,7 +24,6 @@
           - gnome-tweaks
           - gcc
           - helm
-          - golang
           - go-task
           - ripgrep
           - poetry
@@ -54,23 +53,16 @@
           - gcc-c++
           - doctl
           - helix
+          - lazygit
           - "@Development Tools"
           - "@C Development Tools and Libraries"
           - autoconf
           - ncurses-devel
-          - wxGTK-devel
-          - wxBase
-          - java-1.8.0-openjdk-devel
-          - libiodbc
-          - unixODBC-devel.x86_64
-          - erlang-odbc.x86_64
           - libxslt
-          - fop
           - podman-compose
           - inotify-tools
           - blender
           - toilet
-          - dotnet-sdk-8.0
           - unar
         state: present
       when: ansible_os_family == "RedHat"
@@ -87,7 +79,6 @@
           - gnome-tweaks
           - gcc
           - helm
-          - golang-go
           - task
           - ripgrep
           - poetry
@@ -117,20 +108,14 @@
           - g++
           - doctl
           - helix
+          - lazygit
           - autoconf
           - libncurses5-dev
-          - libwxgtk3.2-dev
-          - openjdk-8-jdk
-          - libiodbc2
-          - unixodbc-dev
-          - erlang-odbc
           - libxslt1-dev
-          - fop
           - podman-compose
           - inotify-tools
           - blender
           - toilet
-          - dotnet-sdk-8.0
           - unar
         state: present
       when: ansible_os_family == "Debian"
@@ -150,7 +135,6 @@
           - gh
           - gcc
           - helm
-          - go
           - go-task
           - ripgrep
           - poetry
@@ -171,11 +155,9 @@
           - fd
           - doctl
           - helix
+          - lazygit
           - autoconf
           - ncurses
-          - openjdk@8
-          - libiodbc
-          - unixodbc
           - libxslt
           - fswatch
           - unar
@@ -373,46 +355,52 @@
         append: true
       when: ansible_system != "Darwin"
 
-    - name: Add rtx config manager (Fedora)
+    - name: Add lazygit COPR repository (Fedora)
+      ansible.builtin.command:
+        cmd: dnf copr enable atim/lazygit -y
+      when: ansible_os_family == "RedHat"
+      changed_when: false
+
+    - name: Add mise config manager (Fedora)
       ansible.builtin.yum_repository:
-        name: rtx
-        description: RTX Repo
-        baseurl: https://rtx.pub/rpm
-        gpgkey: https://rtx.pub/gpg-key.pub
+        name: mise
+        description: mise Repo
+        baseurl: https://mise.jdx.dev/rpm
+        gpgkey: https://mise.jdx.dev/gpg-key.pub
         gpgcheck: true
         enabled: true
       when: ansible_os_family == "RedHat"
 
-    - name: Install RTX (Fedora)
+    - name: Install mise (Fedora)
       ansible.builtin.dnf:
-        name: rtx
+        name: mise
         state: present
       when: ansible_os_family == "RedHat"
 
-    - name: Import RTX GPG key (Debian/Ubuntu)
+    - name: Import mise GPG key (Debian/Ubuntu)
       ansible.builtin.get_url:
-        url: https://rtx.pub/gpg-key.pub
-        dest: /usr/share/keyrings/rtx-archive-keyring.gpg
+        url: https://mise.jdx.dev/gpg-key.pub
+        dest: /usr/share/keyrings/mise-archive-keyring.gpg
         mode: '0644'
       when: ansible_os_family == "Debian"
 
-    - name: Add rtx config manager (Debian/Ubuntu)
+    - name: Add mise config manager (Debian/Ubuntu)
       ansible.builtin.apt_repository:
-        repo: "deb [signed-by=/usr/share/keyrings/rtx-archive-keyring.gpg] https://rtx.pub/deb stable main"
+        repo: "deb [signed-by=/usr/share/keyrings/mise-archive-keyring.gpg] https://mise.jdx.dev/deb stable main"
         state: present
         update_cache: yes
       when: ansible_os_family == "Debian"
 
-    - name: Install RTX (Debian/Ubuntu)
+    - name: Install mise (Debian/Ubuntu)
       ansible.builtin.apt:
-        name: rtx
+        name: mise
         state: present
         update_cache: yes
       when: ansible_os_family == "Debian"
 
-    - name: Install RTX (macOS)
+    - name: Install mise (macOS)
       community.general.homebrew:
-        name: rtx
+        name: mise
         state: present
       when: ansible_system == "Darwin"
 

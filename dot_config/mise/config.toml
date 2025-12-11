@@ -1,0 +1,31 @@
+# mise configuration for development tools
+# See: https://mise.jdx.dev/configuration.html
+
+[tools]
+# Always install the latest stable versions
+# When setting up a new machine, mise will install the current latest
+
+# Node.js - LTS (Long-term Support) recommended for stability
+node = "lts"
+
+# Python - Latest stable version
+python = "latest"
+
+# Go - Latest stable version
+go = "latest"
+
+# Rust - Latest stable version
+rust = "latest"
+
+# Optional: Default packages to install with each language
+# Create ~/.default-go-packages, ~/.default-npm-packages, etc. for auto-installation
+
+[settings]
+# Enable experimental features if needed
+experimental = false
+
+# Automatically install tools when entering a directory with a .tool-versions or mise.toml file
+auto_install = true
+
+# Use lockfile for reproducible builds
+lockfile = false

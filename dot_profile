@@ -1,15 +1,2 @@
-. "$HOME/.cargo/env"
-export PATH="$HOME/.cargo/bin:$PATH"
 export PATH="$HOME/.luarocks/bin:$PATH"
-
-# Go environment
-if command -v go >/dev/null 2>&1; then
-    export GOROOT=$(go env GOROOT 2>/dev/null || echo "/usr/lib/go")
-    export GOPATH="$HOME/go"
-    export PATH="$GOROOT/bin:$GOPATH/bin:$PATH"
-fi
-
-
-# Added by Toolbox App
-export PATH="$PATH:/home/ldonley/.local/share/JetBrains/Toolbox/scripts"
 
