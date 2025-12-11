@@ -1,5 +1,17 @@
 #!/bin/bash
 
+OS="$(uname -s)"
+case "${OS}" in
+    Linux*)
+        ;;
+    Darwin*)
+        ;;
+    *)
+        echo "Unsupported operating system: ${OS}"
+        exit 0
+        ;;
+esac
+
 # Install rust
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 

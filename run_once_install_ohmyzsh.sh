@@ -1,5 +1,17 @@
 #!/bin/bash
 
+OS="$(uname -s)"
+case "${OS}" in
+    Linux*)
+        ;;
+    Darwin*)
+        ;;
+    *)
+        echo "Unsupported operating system: ${OS}"
+        exit 0
+        ;;
+esac
+
 if [ ! -d "$HOME/.oh-my-zsh" ]; then
 	echo "Getting ohmyz.sh"
 	sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended --keep-zshrc --skip-chsh
