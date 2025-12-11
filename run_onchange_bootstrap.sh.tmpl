@@ -3,7 +3,11 @@
 # .bootstrap/setup.yml hash: {{ include "dot_bootstrap/setup.yml" | sha256sum }}
 
 if command -v ansible-playbook &> /dev/null; then
+    {{- if eq .chezmoi.os "darwin" }}
+    ansible-playbook {{ joinPath .chezmoi.sourceDir "dot_bootstrap/setup.yml" | quote }}
+    {{- else }}
     ansible-playbook {{ joinPath .chezmoi.sourceDir "dot_bootstrap/setup.yml" | quote }} --ask-become-pass
+    {{- end }}
 fi
 
 
