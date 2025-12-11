@@ -506,7 +506,7 @@
         url: "https://get.pulumi.com/releases/sdk/pulumi-{{ pulumi_version }}-linux-x64.tar.gz"
         dest: "/tmp/pulumi-{{ pulumi_version }}-linux-x64.tar.gz"
         mode: "0644"
-      when: (pulumi_installed is failed or pulumi_installed.stdout is not search(pulumi_version)) and ansible_system != "Darwin"
+      when: (pulumi_installed is failed or pulumi_installed.stdout is not search(pulumi_version)) and ansible_facts["system"] != "Darwin"
 
     - name: Extract Pulumi to /usr/local/bin (Linux)
       ansible.builtin.unarchive:
@@ -514,22 +514,21 @@
         dest: /usr/local/bin
         extra_opts: [--strip-components=1]
         creates: /usr/local/bin/pulumi
-      when: (pulumi_installed is failed or pulumi_installed.stdout is not search(pulumi_version)) and ansible_system != "Darwin"
+      when: (pulumi_installed is failed or pulumi_installed.stdout is not search(pulumi_version)) and ansible_facts["system"] != "Darwin"
 
     - name: Download Pulumi SDK (macOS)
       ansible.builtin.get_url:
         url: "https://get.pulumi.com/releases/sdk/pulumi-{{ pulumi_version }}-darwin-x64.tar.gz"
         dest: "/tmp/pulumi-{{ pulumi_version }}-darwin-x64.tar.gz"
         mode: "0644"
-      when: (pulumi_installed is failed or pulumi_installed.stdout is not search(pulumi_version)) and ansible_system == "Darwin"
+      when: (pulumi_installed is failed or pulumi_installed.stdout is not search(pulumi_version)) and ansible_facts["system"] == "Darwin"
 
     - name: Extract Pulumi to /usr/local/bin (macOS)
-      ansible.builtin.unarchive:
-        src: "/tmp/pulumi-{{ pulumi_version }}-darwin-x64.tar.gz"
-        dest: /usr/local/bin
-        extra_opts: [--strip-components=1]
+      ansible.builtin.command:
+        cmd: tar -xzf /tmp/pulumi-{{ pulumi_version }}-darwin-x64.tar.gz -C /usr/local/bin --strip-components=1
+      args:
         creates: /usr/local/bin/pulumi
-      when: (pulumi_installed is failed or pulumi_installed.stdout is not search(pulumi_version)) and ansible_system == "Darwin"
+      when: (pulumi_installed is failed or pulumi_installed.stdout is not search(pulumi_version)) and ansible_facts["system"] == "Darwin"
 
     - name: Check if the targeted version of flyctl is installed
       ansible.builtin.command: flyctl version
