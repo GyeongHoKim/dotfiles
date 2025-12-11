@@ -13,7 +13,7 @@
       ansible.builtin.set_fact:
         remote_regular_user: "{{ ansible_env.SUDO_USER or ansible_user_id }}"
 
-    - name: Install packages
+    - name: Install packages (Fedora)
       ansible.builtin.dnf:
         name:
           - git
@@ -72,6 +72,66 @@
           - dotnet-sdk-8.0
           - unar
         state: present
+      when: ansible_os_family == "RedHat"
+
+    - name: Install packages (Debian/Ubuntu)
+      ansible.builtin.apt:
+        update_cache: yes
+        name:
+          - git
+          - htop
+          - vim
+          - firefox-esr
+          - gh
+          - gnome-tweaks
+          - gcc
+          - helm
+          - task
+          - ripgrep
+          - poetry
+          - zsh
+          - fzf
+          - tmux
+          - ffmpeg
+          - zlib1g
+          - zlib1g-dev
+          - build-essential
+          - patch
+          - bzip2
+          - libbz2-dev
+          - libreadline-dev
+          - sqlite3
+          - libsqlite3-dev
+          - libssl-dev
+          - tk-dev
+          - libffi-dev
+          - liblzma-dev
+          - uuid-dev
+          - libgdbm-dev
+          - libnsl-dev
+          - luarocks
+          - wl-clipboard
+          - fd-find
+          - g++
+          - doctl
+          - helix
+          - autoconf
+          - libncurses5-dev
+          - libwxgtk3.2-dev
+          - openjdk-8-jdk
+          - libiodbc2
+          - unixodbc-dev
+          - erlang-odbc
+          - libxslt1-dev
+          - fop
+          - podman-compose
+          - inotify-tools
+          - blender
+          - toilet
+          - dotnet-sdk-8.0
+          - unar
+        state: present
+      when: ansible_os_family == "Debian"
 
     - name: Change shell to zsh
       ansible.builtin.user:
@@ -82,8 +142,9 @@
       ansible.builtin.dnf:
         name: dnf-plugins-core
         state: present
+      when: ansible_os_family == "RedHat"
 
-    - name: Add Brave Browser Repo
+    - name: Add Brave Browser Repo (Fedora)
       ansible.builtin.yum_repository:
         name: brave-browser
         description: Brave Browser
@@ -91,23 +152,48 @@
         gpgkey: https://brave-browser-rpm-release.s3.brave.com/brave-core.asc
         gpgcheck: true
         enabled: true
+      when: ansible_os_family == "RedHat"
 
-    - name: Import Brave Browser GPG Key
+    - name: Import Brave Browser GPG Key (Fedora)
       ansible.builtin.rpm_key:
         key: https://brave-browser-rpm-release.s3.brave.com/brave-core.asc
         state: present
+      when: ansible_os_family == "RedHat"
 
-    - name: Install Brave Browser
+    - name: Install Brave Browser (Fedora)
       ansible.builtin.dnf:
         name: brave-browser
         state: present
+      when: ansible_os_family == "RedHat"
 
-    - name: Import Microsoft GPG Key
+    - name: Import Brave Browser GPG Key (Debian/Ubuntu)
+      ansible.builtin.get_url:
+        url: https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg
+        dest: /usr/share/keyrings/brave-browser-archive-keyring.gpg
+        mode: '0644'
+      when: ansible_os_family == "Debian"
+
+    - name: Add Brave Browser Repo (Debian/Ubuntu)
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/usr/share/keyrings/brave-browser-archive-keyring.gpg arch=amd64] https://brave-browser-apt-release.s3.brave.com/ stable main"
+        state: present
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+
+    - name: Install Brave Browser (Debian/Ubuntu)
+      ansible.builtin.apt:
+        name: brave-browser
+        state: present
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+
+    - name: Import Microsoft GPG Key (Fedora)
       ansible.builtin.rpm_key:
         key: https://packages.microsoft.com/keys/microsoft.asc
         state: present
+      when: ansible_os_family == "RedHat"
 
-    - name: Add Visual Studio Code Repo
+    - name: Add Visual Studio Code Repo (Fedora)
       ansible.builtin.yum_repository:
         name: vscode
         description: Visual Studio Code
@@ -115,13 +201,36 @@
         gpgkey: https://packages.microsoft.com/keys/microsoft.asc
         gpgcheck: true
         enabled: true
+      when: ansible_os_family == "RedHat"
 
-    - name: Install VS Code
+    - name: Install VS Code (Fedora)
       ansible.builtin.dnf:
         name: code
         state: present
+      when: ansible_os_family == "RedHat"
 
-    - name: Add Docker repo
+    - name: Import Microsoft GPG Key (Debian/Ubuntu)
+      ansible.builtin.get_url:
+        url: https://packages.microsoft.com/keys/microsoft.asc
+        dest: /usr/share/keyrings/microsoft-archive-keyring.gpg
+        mode: '0644'
+      when: ansible_os_family == "Debian"
+
+    - name: Add Visual Studio Code Repo (Debian/Ubuntu)
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/usr/share/keyrings/microsoft-archive-keyring.gpg arch=amd64,arm64,armhf] https://packages.microsoft.com/repos/code stable main"
+        state: present
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+
+    - name: Install VS Code (Debian/Ubuntu)
+      ansible.builtin.apt:
+        name: code
+        state: present
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+
+    - name: Add Docker repo (Fedora)
       ansible.builtin.yum_repository:
         name: docker
         description: Docker repo
@@ -129,8 +238,9 @@
         gpgkey: "https://download.docker.com/linux/fedora/gpg"
         gpgcheck: true
         enabled: true
+      when: ansible_os_family == "RedHat"
 
-    - name: Install Docker
+    - name: Install Docker (Fedora)
       ansible.builtin.dnf:
         name:
           - docker-ce
@@ -139,6 +249,43 @@
           - docker-buildx-plugin
           - docker-compose-plugin
         state: present
+      when: ansible_os_family == "RedHat"
+
+    - name: Install prerequisites for Docker (Debian/Ubuntu)
+      ansible.builtin.apt:
+        name:
+          - ca-certificates
+          - curl
+          - gnupg
+        state: present
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+
+    - name: Add Docker GPG key (Debian/Ubuntu)
+      ansible.builtin.get_url:
+        url: https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg
+        dest: /usr/share/keyrings/docker-archive-keyring.gpg
+        mode: '0644'
+      when: ansible_os_family == "Debian"
+
+    - name: Add Docker repo (Debian/Ubuntu)
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/usr/share/keyrings/docker-archive-keyring.gpg arch={{ ansible_architecture }}] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
+        state: present
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+
+    - name: Install Docker (Debian/Ubuntu)
+      ansible.builtin.apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+        update_cache: yes
+      when: ansible_os_family == "Debian"
 
     - name: Add Docker group
       ansible.builtin.group:
@@ -151,7 +298,7 @@
         groups: docker
         append: true
 
-    - name: Add rtx config manager
+    - name: Add rtx config manager (Fedora)
       ansible.builtin.yum_repository:
         name: rtx
         description: RTX Repo
@@ -159,13 +306,36 @@
         gpgkey: https://rtx.pub/gpg-key.pub
         gpgcheck: true
         enabled: true
+      when: ansible_os_family == "RedHat"
 
-    - name: Install RTX
+    - name: Install RTX (Fedora)
       ansible.builtin.dnf:
         name: rtx
         state: present
+      when: ansible_os_family == "RedHat"
 
-    - name: Add kubectl repo
+    - name: Import RTX GPG key (Debian/Ubuntu)
+      ansible.builtin.get_url:
+        url: https://rtx.pub/gpg-key.pub
+        dest: /usr/share/keyrings/rtx-archive-keyring.gpg
+        mode: '0644'
+      when: ansible_os_family == "Debian"
+
+    - name: Add rtx config manager (Debian/Ubuntu)
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/usr/share/keyrings/rtx-archive-keyring.gpg] https://rtx.pub/deb stable main"
+        state: present
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+
+    - name: Install RTX (Debian/Ubuntu)
+      ansible.builtin.apt:
+        name: rtx
+        state: present
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+
+    - name: Add kubectl repo (Fedora)
       ansible.builtin.yum_repository:
         name: Kubernetes
         description: Kubernetes repo
@@ -173,13 +343,43 @@
         gpgkey: https://pkgs.k8s.io/core:/stable:/v1.28/rpm/repodata/repomd.xml.key
         gpgcheck: true
         enabled: true
+      when: ansible_os_family == "RedHat"
 
-    - name: Install kubectl
+    - name: Install kubectl (Fedora)
       ansible.builtin.dnf:
         name: kubectl
         state: present
+      when: ansible_os_family == "RedHat"
 
-    - name: Add Hashicorp Repo
+    - name: Create keyrings directory (Debian/Ubuntu)
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+      when: ansible_os_family == "Debian"
+
+    - name: Add kubectl GPG key (Debian/Ubuntu)
+      ansible.builtin.get_url:
+        url: https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key
+        dest: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+        mode: '0644'
+      when: ansible_os_family == "Debian"
+
+    - name: Add kubectl repo (Debian/Ubuntu)
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /"
+        state: present
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+
+    - name: Install kubectl (Debian/Ubuntu)
+      ansible.builtin.apt:
+        name: kubectl
+        state: present
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+
+    - name: Add Hashicorp Repo (Fedora)
       ansible.builtin.yum_repository:
         name: hashicorp
         description: Hashicorp repo
@@ -187,11 +387,34 @@
         gpgkey: https://rpm.releases.hashicorp.com/gpg
         gpgcheck: true
         enabled: true
+      when: ansible_os_family == "RedHat"
 
-    - name: Install Terraform
+    - name: Install Terraform (Fedora)
       ansible.builtin.dnf:
         name: terraform
         state: present
+      when: ansible_os_family == "RedHat"
+
+    - name: Add Hashicorp GPG key (Debian/Ubuntu)
+      ansible.builtin.get_url:
+        url: https://apt.releases.hashicorp.com/gpg
+        dest: /usr/share/keyrings/hashicorp-archive-keyring.gpg
+        mode: '0644'
+      when: ansible_os_family == "Debian"
+
+    - name: Add Hashicorp Repo (Debian/Ubuntu)
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com {{ ansible_distribution_release }} main"
+        state: present
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+
+    - name: Install Terraform (Debian/Ubuntu)
+      ansible.builtin.apt:
+        name: terraform
+        state: present
+        update_cache: yes
+      when: ansible_os_family == "Debian"
 
     - name: Check if Pulumi is installed
       ansible.builtin.command:
