@@ -73,7 +73,7 @@ Supported platforms: **Fedora**, **Debian/Ubuntu**, **macOS**, and **Windows 11*
 ### Linux / macOS
 
 ```shell
-export GITHUB_USERNAME=gyeonghokim
+export GITHUB_USERNAME=GyeongHoKim
 sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply $GITHUB_USERNAME
 ```
 
