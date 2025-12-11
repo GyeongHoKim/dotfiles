@@ -1,9 +1,14 @@
 ---
-- name: Machine setup
+- name: Gather facts
   hosts: localhost
-  become: "{{ ansible_system != 'Darwin' }}"
   connection: local
   gather_facts: true
+
+- name: Machine setup
+  hosts: localhost
+  become: "{{ ansible_facts['system'] != 'Darwin' }}"
+  connection: local
+  gather_facts: false
   vars:
     flyctl_version: "0.1.130"
     pulumi_version: "v3.94.2"
