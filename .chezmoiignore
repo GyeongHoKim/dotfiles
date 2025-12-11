@@ -1,1 +1,22 @@
 README.md
+WINDOWS.md
+
+# Platform-specific ignores
+{{- if eq .chezmoi.os "windows" }}
+# Ignore Linux/macOS files on Windows
+run_once_install_ansible.sh
+run_once_install_ohmyzsh.sh
+run_once_install_bob.sh
+run_onchange_bootstrap.sh.tmpl
+run_onchange_reload_gnome-terminal-profiles.sh.tmpl
+.bootstrap/
+.zshrc
+.bashrc
+.profile
+.tmux.conf
+{{- else }}
+# Ignore Windows files on Linux/macOS
+run_once_install_packages_windows.ps1
+run_onchange_windows_bootstrap.ps1.tmpl
+Documents/PowerShell/
+{{- end }}

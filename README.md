@@ -2,15 +2,17 @@
 
 This repo contains the configuration to setup my machines for web development. This is using [Chezmoi](https://chezmoi.io), the dotfile manager to setup the install.
 
-Supported platforms: **Fedora**, **Debian/Ubuntu**, and **macOS**
+Supported platforms: **Fedora**, **Debian/Ubuntu**, **macOS**, and **Windows 11**
 
 ## What gets installed
 
 ### Development Environment
 
 **Shell & Terminal:**
-- zsh with [Oh My Zsh](https://ohmyz.sh/)
-- tmux for terminal multiplexing
+- zsh with [Oh My Zsh](https://ohmyz.sh/) (Linux/macOS)
+- PowerShell with custom profile (Windows)
+- tmux for terminal multiplexing (Linux/macOS)
+- Windows Terminal (Windows)
 - JetBrains Mono Nerd Font
 
 **Editors:**
@@ -34,7 +36,7 @@ Supported platforms: **Fedora**, **Debian/Ubuntu**, and **macOS**
 - Task runner: go-task
 
 **Container & Infrastructure:**
-- Docker (+ Docker Desktop on macOS)
+- Docker Desktop (macOS/Windows) / Docker (Linux)
 - Podman (Linux)
 - Kubernetes: kubectl, helm
 - Infrastructure as Code: terraform, pulumi
@@ -68,6 +70,8 @@ Supported platforms: **Fedora**, **Debian/Ubuntu**, and **macOS**
 
 ## How to run
 
+### Linux / macOS
+
 ```shell
 export GITHUB_USERNAME=gyeonghokim
 sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply $GITHUB_USERNAME
@@ -79,6 +83,32 @@ The setup will:
 3. Install Oh My Zsh
 4. Install bob-nvim (Neovim version manager)
 5. Configure mise to auto-install language runtimes on first shell login
+
+### Windows 11
+
+See **[WINDOWS.md](WINDOWS.md)** for detailed Windows setup instructions.
+
+**Quick start:**
+
+```powershell
+# Install chezmoi
+winget install twpayne.chezmoi
+
+# Initialize and apply (replace with your username)
+chezmoi init https://github.com/gyeonghokim/dotfiles.git
+chezmoi apply
+
+# Install language runtimes
+mise install
+```
+
+The setup will:
+1. Install development tools via winget (Windows Package Manager)
+2. Set up PowerShell profile with mise activation
+3. Deploy Neovim configuration (cross-platform)
+4. Install mise for language version management
+
+**Important:** After installation, restart your terminal and run `mise install` to install language runtimes.
 
 ## Managing Language Versions
 
