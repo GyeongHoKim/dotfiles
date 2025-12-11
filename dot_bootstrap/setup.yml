@@ -24,6 +24,7 @@
           - gnome-tweaks
           - gcc
           - helm
+          - golang
           - go-task
           - ripgrep
           - poetry
@@ -86,6 +87,7 @@
           - gnome-tweaks
           - gcc
           - helm
+          - golang-go
           - task
           - ripgrep
           - poetry
@@ -148,6 +150,7 @@
           - gh
           - gcc
           - helm
+          - go
           - go-task
           - ripgrep
           - poetry
@@ -200,6 +203,13 @@
         name: "{{ remote_regular_user }}"
         shell: /bin/zsh
       when: ansible_system == "Darwin"
+
+    - name: Create Go workspace directory
+      ansible.builtin.file:
+        path: "~{{ remote_regular_user }}/go"
+        state: directory
+        mode: "0755"
+        owner: "{{ remote_regular_user }}"
 
     - name: Install DNF plugins core
       ansible.builtin.dnf:
