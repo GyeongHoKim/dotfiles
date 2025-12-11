@@ -1,7 +1,7 @@
 ---
 - name: Machine setup
   hosts: localhost
-  become: false
+  become: true
   connection: local
   gather_facts: true
   vars:
@@ -11,7 +11,7 @@
   tasks:
     - name: Get my user
       ansible.builtin.set_fact:
-        remote_regular_user: "{{ ansible_user_id }}"
+        remote_regular_user: "{{ ansible_env.SUDO_USER or ansible_user_id }}"
 
     - name: Install packages (Fedora)
       become: true
@@ -123,6 +123,7 @@
 
     - name: Homebrew operations (macOS)
       when: ansible_system == "Darwin"
+      become: false
       block:
         - name: Install Homebrew (macOS)
           community.general.homebrew:
