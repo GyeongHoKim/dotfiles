@@ -1,14 +1,9 @@
 ---
-- name: Gather facts
-  hosts: localhost
-  connection: local
-  gather_facts: true
-
 - name: Machine setup
   hosts: localhost
-  become: "{{ ansible_facts['system'] != 'Darwin' }}"
+  become: true
   connection: local
-  gather_facts: false
+  gather_facts: true
   vars:
     flyctl_version: "0.1.130"
     pulumi_version: "v3.94.2"
@@ -128,6 +123,7 @@
     - name: Install Homebrew (macOS)
       community.general.homebrew:
         state: present
+      become: false
       when: ansible_system == "Darwin"
 
     - name: Install packages via Homebrew (macOS)
@@ -167,6 +163,7 @@
           - fswatch
           - unar
         state: present
+      become: false
       when: ansible_system == "Darwin"
 
     - name: Install GUI applications via Homebrew Cask (macOS)
@@ -177,6 +174,7 @@
           - docker
           - brave-browser
         state: present
+      become: false
       when: ansible_system == "Darwin"
 
     - name: Change shell to zsh (Linux)
@@ -189,7 +187,6 @@
       ansible.builtin.user:
         name: "{{ remote_regular_user }}"
         shell: /bin/zsh
-      become: true
       when: ansible_system == "Darwin"
 
     - name: Create Go workspace directory
@@ -408,6 +405,7 @@
       community.general.homebrew:
         name: mise
         state: present
+      become: false
       when: ansible_system == "Darwin"
 
     - name: Add kubectl repo (Fedora)
@@ -458,6 +456,7 @@
       community.general.homebrew:
         name: kubectl
         state: present
+      become: false
       when: ansible_system == "Darwin"
 
     - name: Add Hashicorp Repo (Fedora)
@@ -501,6 +500,7 @@
       community.general.homebrew:
         name: terraform
         state: present
+      become: false
       when: ansible_system == "Darwin"
 
     - name: Check if Pulumi is installed
@@ -538,7 +538,6 @@
         dest: /usr/local/bin
         extra_opts: [--strip-components=1]
         creates: /usr/local/bin/pulumi
-      become: true
       when: (pulumi_installed is failed or pulumi_installed.stdout is not search(pulumi_version)) and ansible_system == "Darwin"
 
     - name: Check if the targeted version of flyctl is installed
@@ -573,7 +572,6 @@
         src: "/tmp/flyctl_{{ flyctl_version }}_macOS_x86_64.tar.gz"
         dest: "/usr/local/bin"
         remote_src: true
-      become: true
       when: flyctl_version not in installed_flyctl_version.stdout and ansible_system == "Darwin"
 
     - name: Install Flatpak packages (Linux)
@@ -602,6 +600,7 @@
           - meld
           - db-browser-for-sqlite
         state: present
+      become: false
       when: ansible_system == "Darwin"
 
     - name: Ensure fonts directory (Linux)
