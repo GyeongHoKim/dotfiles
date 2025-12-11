@@ -1,4 +1,14 @@
 #!/bin/bash
 
+# Only run on Linux systems with GNOME
+if [[ "$(uname)" != "Linux" ]]; then
+  exit 0
+fi
+
+# Check if dconf is available
+if ! command -v dconf &> /dev/null; then
+  exit 0
+fi
+
 # .config/gnome-terminal-profiles.dconf hash: {{ include "dot_config/gnome-terminal-profiles.dconf" | sha256sum }}
 dconf load /org/gnome/terminal/legacy/profiles:/ < {{ joinPath .chezmoi.sourceDir "dot_config/gnome-terminal-profiles.dconf" | quote }}
