@@ -127,7 +127,7 @@
       when: ansible_os_family == "Debian"
 
     - name: Homebrew operations (macOS)
-      when: ansible_system == "Darwin"
+      when: ansible_facts["system"] == "Darwin"
       become: false
       block:
         - name: Install Homebrew (macOS)
@@ -193,13 +193,13 @@
       ansible.builtin.user:
         name: "{{ remote_regular_user }}"
         shell: /usr/bin/zsh
-      when: ansible_system != "Darwin"
+      when: ansible_facts["system"] != "Darwin"
 
     - name: Change shell to zsh (macOS)
       ansible.builtin.user:
         name: "{{ remote_regular_user }}"
         shell: /bin/zsh
-      when: ansible_system == "Darwin"
+      when: ansible_facts["system"] == "Darwin"
 
     - name: Create Go workspace directory
       ansible.builtin.file:
@@ -361,14 +361,14 @@
       ansible.builtin.group:
         name: docker
         state: present
-      when: ansible_system != "Darwin"
+      when: ansible_facts["system"] != "Darwin"
 
     - name: Add user to docker group (Linux)
       ansible.builtin.user:
         name: "{{ remote_regular_user }}"
         groups: docker
         append: true
-      when: ansible_system != "Darwin"
+      when: ansible_facts["system"] != "Darwin"
 
     - name: Add lazygit COPR repository (Fedora)
       ansible.builtin.command:
@@ -541,28 +541,28 @@
         url: "https://github.com/superfly/flyctl/releases/download/v{{ flyctl_version }}/flyctl_{{ flyctl_version }}_Linux_x86_64.tar.gz"
         dest: "/tmp/flyctl_{{ flyctl_version }}_Linux_x86_64.tar.gz"
         mode: "0644"
-      when: flyctl_version not in installed_flyctl_version.stdout and ansible_system != "Darwin"
+      when: (installed_flyctl_version is failed or flyctl_version not in installed_flyctl_version.stdout) and ansible_facts["system"] != "Darwin"
 
     - name: Extract flyctl to /usr/local/bin (Linux)
       ansible.builtin.unarchive:
         src: "/tmp/flyctl_{{ flyctl_version }}_Linux_x86_64.tar.gz"
         dest: "/usr/local/bin"
         remote_src: true
-      when: flyctl_version not in installed_flyctl_version.stdout and ansible_system != "Darwin"
+      when: (installed_flyctl_version is failed or flyctl_version not in installed_flyctl_version.stdout) and ansible_facts["system"] != "Darwin"
 
     - name: Download flyctl tar.gz (macOS)
       ansible.builtin.get_url:
         url: "https://github.com/superfly/flyctl/releases/download/v{{ flyctl_version }}/flyctl_{{ flyctl_version }}_macOS_x86_64.tar.gz"
         dest: "/tmp/flyctl_{{ flyctl_version }}_macOS_x86_64.tar.gz"
         mode: "0644"
-      when: flyctl_version not in installed_flyctl_version.stdout and ansible_system == "Darwin"
+      when: (installed_flyctl_version is failed or flyctl_version not in installed_flyctl_version.stdout) and ansible_facts["system"] == "Darwin"
 
     - name: Extract flyctl to /usr/local/bin (macOS)
-      ansible.builtin.unarchive:
-        src: "/tmp/flyctl_{{ flyctl_version }}_macOS_x86_64.tar.gz"
-        dest: "/usr/local/bin"
-        remote_src: true
-      when: flyctl_version not in installed_flyctl_version.stdout and ansible_system == "Darwin"
+      ansible.builtin.command:
+        cmd: tar -xzf /tmp/flyctl_{{ flyctl_version }}_macOS_x86_64.tar.gz -C /usr/local/bin --strip-components=1
+      args:
+        creates: /usr/local/bin/flyctl
+      when: (installed_flyctl_version is failed or flyctl_version not in installed_flyctl_version.stdout) and ansible_facts["system"] == "Darwin"
 
     - name: Install Flatpak packages (Linux)
       community.general.flatpak:
@@ -577,7 +577,7 @@
           - org.gnome.meld
           - org.sqlitebrowser.sqlitebrowser
         state: present
-      when: ansible_system != "Darwin"
+      when: ansible_facts["system"] != "Darwin"
 
     - name: Ensure fonts directory (Linux)
       ansible.builtin.file:
@@ -585,7 +585,7 @@
         state: directory
         mode: "0755"
         owner: "{{ remote_regular_user }}"
-      when: ansible_system != "Darwin"
+      when: ansible_facts["system"] != "Darwin"
 
     - name: Ensure fonts directory (macOS)
       ansible.builtin.file:
@@ -593,24 +593,24 @@
         state: directory
         mode: "0755"
         owner: "{{ remote_regular_user }}"
-      when: ansible_system == "Darwin"
+      when: ansible_facts["system"] == "Darwin"
 
     - name: Check if Jetbrains Mono exists (Linux)
       ansible.builtin.shell: "ls ~{{ remote_regular_user }}/.fonts/JetBrainsMonoNerd*FontMono*"
       register: jetbrains_mono_exists
       ignore_errors: true
       changed_when: false
-      when: ansible_system != "Darwin"
+      when: ansible_facts["system"] != "Darwin"
 
     - name: Check if Jetbrains Mono exists (macOS)
       ansible.builtin.shell: "ls ~{{ remote_regular_user }}/Library/Fonts/JetBrainsMonoNerd*FontMono*"
       register: jetbrains_mono_exists_mac
       ignore_errors: true
       changed_when: false
-      when: ansible_system == "Darwin"
+      when: ansible_facts["system"] == "Darwin"
 
     - name: Download Jetbrains mono (Linux)
-      when: jetbrains_mono_exists is failed and ansible_system != "Darwin"
+      when: jetbrains_mono_exists is failed and ansible_facts["system"] != "Darwin"
       ansible.builtin.unarchive:
         src: https://github.com/ryanoasis/nerd-fonts/releases/download/v3.1.1/JetBrainsMono.zip
         dest: "~{{ remote_regular_user }}/.fonts/"
@@ -619,7 +619,7 @@
         owner: "{{ remote_regular_user }}"
 
     - name: Download Jetbrains mono (macOS)
-      when: jetbrains_mono_exists_mac is failed and ansible_system == "Darwin"
+      when: jetbrains_mono_exists_mac is failed and ansible_facts["system"] == "Darwin"
       ansible.builtin.unarchive:
         src: https://github.com/ryanoasis/nerd-fonts/releases/download/v3.1.1/JetBrainsMono.zip
         dest: "~{{ remote_regular_user }}/Library/Fonts/"
