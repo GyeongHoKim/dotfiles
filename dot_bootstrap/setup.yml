@@ -133,10 +133,73 @@
         state: present
       when: ansible_os_family == "Debian"
 
-    - name: Change shell to zsh
+    - name: Install Homebrew (macOS)
+      community.general.homebrew:
+        state: present
+      when: ansible_system == "Darwin"
+
+    - name: Install packages via Homebrew (macOS)
+      community.general.homebrew:
+        name:
+          - git
+          - htop
+          - vim
+          - firefox
+          - gh
+          - gcc
+          - helm
+          - go-task
+          - ripgrep
+          - poetry
+          - fzf
+          - tmux
+          - ffmpeg
+          - zlib
+          - make
+          - patch
+          - bzip2
+          - readline
+          - sqlite
+          - openssl
+          - libffi
+          - xz
+          - gdbm
+          - luarocks
+          - fd
+          - doctl
+          - helix
+          - autoconf
+          - ncurses
+          - openjdk@8
+          - libiodbc
+          - unixodbc
+          - libxslt
+          - fswatch
+          - unar
+        state: present
+      when: ansible_system == "Darwin"
+
+    - name: Install GUI applications via Homebrew Cask (macOS)
+      community.general.homebrew_cask:
+        name:
+          - blender
+          - visual-studio-code
+          - docker
+          - brave-browser
+        state: present
+      when: ansible_system == "Darwin"
+
+    - name: Change shell to zsh (Linux)
       ansible.builtin.user:
         name: "{{ remote_regular_user }}"
         shell: /usr/bin/zsh
+      when: ansible_system != "Darwin"
+
+    - name: Change shell to zsh (macOS)
+      ansible.builtin.user:
+        name: "{{ remote_regular_user }}"
+        shell: /bin/zsh
+      when: ansible_system == "Darwin"
 
     - name: Install DNF plugins core
       ansible.builtin.dnf:
@@ -287,16 +350,18 @@
         update_cache: yes
       when: ansible_os_family == "Debian"
 
-    - name: Add Docker group
+    - name: Add Docker group (Linux)
       ansible.builtin.group:
         name: docker
         state: present
+      when: ansible_system != "Darwin"
 
-    - name: Add user to docker group
+    - name: Add user to docker group (Linux)
       ansible.builtin.user:
         name: "{{ remote_regular_user }}"
         groups: docker
         append: true
+      when: ansible_system != "Darwin"
 
     - name: Add rtx config manager (Fedora)
       ansible.builtin.yum_repository:
@@ -334,6 +399,12 @@
         state: present
         update_cache: yes
       when: ansible_os_family == "Debian"
+
+    - name: Install RTX (macOS)
+      community.general.homebrew:
+        name: rtx
+        state: present
+      when: ansible_system == "Darwin"
 
     - name: Add kubectl repo (Fedora)
       ansible.builtin.yum_repository:
@@ -379,6 +450,12 @@
         update_cache: yes
       when: ansible_os_family == "Debian"
 
+    - name: Install kubectl (macOS)
+      community.general.homebrew:
+        name: kubectl
+        state: present
+      when: ansible_system == "Darwin"
+
     - name: Add Hashicorp Repo (Fedora)
       ansible.builtin.yum_repository:
         name: hashicorp
@@ -416,6 +493,12 @@
         update_cache: yes
       when: ansible_os_family == "Debian"
 
+    - name: Install Terraform (macOS)
+      community.general.homebrew:
+        name: terraform
+        state: present
+      when: ansible_system == "Darwin"
+
     - name: Check if Pulumi is installed
       ansible.builtin.command:
         cmd: pulumi version
@@ -423,20 +506,35 @@
       ignore_errors: true
       changed_when: false
 
-    - name: Download Pulumi SDK
+    - name: Download Pulumi SDK (Linux)
       ansible.builtin.get_url:
         url: "https://get.pulumi.com/releases/sdk/pulumi-{{ pulumi_version }}-linux-x64.tar.gz"
         dest: "/tmp/pulumi-{{ pulumi_version }}-linux-x64.tar.gz"
         mode: "0644"
-      when: pulumi_installed is failed or pulumi_installed.stdout is not search(pulumi_version)
+      when: (pulumi_installed is failed or pulumi_installed.stdout is not search(pulumi_version)) and ansible_system != "Darwin"
 
-    - name: Extract Pulumi to /usr/local/bin
+    - name: Extract Pulumi to /usr/local/bin (Linux)
       ansible.builtin.unarchive:
         src: "/tmp/pulumi-{{ pulumi_version }}-linux-x64.tar.gz"
         dest: /usr/local/bin
         extra_opts: [--strip-components=1]
         creates: /usr/local/bin/pulumi
-      when: pulumi_installed is failed or pulumi_installed.stdout is not search(pulumi_version)
+      when: (pulumi_installed is failed or pulumi_installed.stdout is not search(pulumi_version)) and ansible_system != "Darwin"
+
+    - name: Download Pulumi SDK (macOS)
+      ansible.builtin.get_url:
+        url: "https://get.pulumi.com/releases/sdk/pulumi-{{ pulumi_version }}-darwin-x64.tar.gz"
+        dest: "/tmp/pulumi-{{ pulumi_version }}-darwin-x64.tar.gz"
+        mode: "0644"
+      when: (pulumi_installed is failed or pulumi_installed.stdout is not search(pulumi_version)) and ansible_system == "Darwin"
+
+    - name: Extract Pulumi to /usr/local/bin (macOS)
+      ansible.builtin.unarchive:
+        src: "/tmp/pulumi-{{ pulumi_version }}-darwin-x64.tar.gz"
+        dest: /usr/local/bin
+        extra_opts: [--strip-components=1]
+        creates: /usr/local/bin/pulumi
+      when: (pulumi_installed is failed or pulumi_installed.stdout is not search(pulumi_version)) and ansible_system == "Darwin"
 
     - name: Check if the targeted version of flyctl is installed
       ansible.builtin.command: flyctl version
@@ -444,21 +542,35 @@
       ignore_errors: true
       changed_when: false
 
-    - name: Download flyctl tar.gz
+    - name: Download flyctl tar.gz (Linux)
       ansible.builtin.get_url:
         url: "https://github.com/superfly/flyctl/releases/download/v{{ flyctl_version }}/flyctl_{{ flyctl_version }}_Linux_x86_64.tar.gz"
         dest: "/tmp/flyctl_{{ flyctl_version }}_Linux_x86_64.tar.gz"
         mode: "0644"
-      when: flyctl_version not in installed_flyctl_version.stdout
+      when: flyctl_version not in installed_flyctl_version.stdout and ansible_system != "Darwin"
 
-    - name: Extract flyctl to /usr/local/bin
+    - name: Extract flyctl to /usr/local/bin (Linux)
       ansible.builtin.unarchive:
         src: "/tmp/flyctl_{{ flyctl_version }}_Linux_x86_64.tar.gz"
         dest: "/usr/local/bin"
         remote_src: true
-      when: flyctl_version not in installed_flyctl_version.stdout
+      when: flyctl_version not in installed_flyctl_version.stdout and ansible_system != "Darwin"
 
-    - name: Install Flatpak packages
+    - name: Download flyctl tar.gz (macOS)
+      ansible.builtin.get_url:
+        url: "https://github.com/superfly/flyctl/releases/download/v{{ flyctl_version }}/flyctl_{{ flyctl_version }}_macOS_x86_64.tar.gz"
+        dest: "/tmp/flyctl_{{ flyctl_version }}_macOS_x86_64.tar.gz"
+        mode: "0644"
+      when: flyctl_version not in installed_flyctl_version.stdout and ansible_system == "Darwin"
+
+    - name: Extract flyctl to /usr/local/bin (macOS)
+      ansible.builtin.unarchive:
+        src: "/tmp/flyctl_{{ flyctl_version }}_macOS_x86_64.tar.gz"
+        dest: "/usr/local/bin"
+        remote_src: true
+      when: flyctl_version not in installed_flyctl_version.stdout and ansible_system == "Darwin"
+
+    - name: Install Flatpak packages (Linux)
       community.general.flatpak:
         name:
           - com.obsproject.Studio
@@ -471,25 +583,65 @@
           - org.gnome.meld
           - org.sqlitebrowser.sqlitebrowser
         state: present
+      when: ansible_system != "Darwin"
 
-    - name: Ensure fonts directory
+    - name: Install GUI applications via Homebrew Cask (macOS) - Additional
+      community.general.homebrew_cask:
+        name:
+          - obs
+          - vlc
+          - obsidian
+          - gimp
+          - insomnia
+          - meld
+          - db-browser-for-sqlite
+        state: present
+      when: ansible_system == "Darwin"
+
+    - name: Ensure fonts directory (Linux)
       ansible.builtin.file:
         path: "~{{ remote_regular_user }}/.fonts"
         state: directory
         mode: "0755"
         owner: "{{ remote_regular_user }}"
+      when: ansible_system != "Darwin"
 
-    - name: Check if Jetbrains Mono exists
+    - name: Ensure fonts directory (macOS)
+      ansible.builtin.file:
+        path: "~{{ remote_regular_user }}/Library/Fonts"
+        state: directory
+        mode: "0755"
+        owner: "{{ remote_regular_user }}"
+      when: ansible_system == "Darwin"
+
+    - name: Check if Jetbrains Mono exists (Linux)
       ansible.builtin.shell: "ls ~{{ remote_regular_user }}/.fonts/JetBrainsMonoNerd*FontMono*"
       register: jetbrains_mono_exists
       ignore_errors: true
       changed_when: false
+      when: ansible_system != "Darwin"
 
-    - name: Download Jetbrains mono
-      when: jetbrains_mono_exists is failed
+    - name: Check if Jetbrains Mono exists (macOS)
+      ansible.builtin.shell: "ls ~{{ remote_regular_user }}/Library/Fonts/JetBrainsMonoNerd*FontMono*"
+      register: jetbrains_mono_exists_mac
+      ignore_errors: true
+      changed_when: false
+      when: ansible_system == "Darwin"
+
+    - name: Download Jetbrains mono (Linux)
+      when: jetbrains_mono_exists is failed and ansible_system != "Darwin"
       ansible.builtin.unarchive:
         src: https://github.com/ryanoasis/nerd-fonts/releases/download/v3.1.1/JetBrainsMono.zip
         dest: "~{{ remote_regular_user }}/.fonts/"
+        remote_src: true
+        mode: "0755"
+        owner: "{{ remote_regular_user }}"
+
+    - name: Download Jetbrains mono (macOS)
+      when: jetbrains_mono_exists_mac is failed and ansible_system == "Darwin"
+      ansible.builtin.unarchive:
+        src: https://github.com/ryanoasis/nerd-fonts/releases/download/v3.1.1/JetBrainsMono.zip
+        dest: "~{{ remote_regular_user }}/Library/Fonts/"
         remote_src: true
         mode: "0755"
         owner: "{{ remote_regular_user }}"
