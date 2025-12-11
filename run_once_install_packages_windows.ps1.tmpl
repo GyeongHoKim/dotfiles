@@ -1,3 +1,4 @@
+{{- if eq .chezmoi.os "windows" }}
 # Windows Package Installation Script
 # This script installs development tools using winget (Windows Package Manager)
 # It runs once during initial setup
@@ -145,3 +146,4 @@ Write-Host "2. Run 'mise doctor' to verify mise installation" -ForegroundColor W
 Write-Host "3. Run 'mise install' to install language runtimes (Node, Python, Go, Rust)" -ForegroundColor White
 Write-Host "4. If you haven't already, install bob-nvim after Rust is available" -ForegroundColor White
 Write-Host ""
+{{- end }}

@@ -1,13 +1,14 @@
+{{- if eq .chezmoi.os "windows" }}
 # Windows Bootstrap Script
-# This script runs whenever run_once_install_packages_windows.ps1 changes
-# Hash: {{ include "run_once_install_packages_windows.ps1" | sha256sum }}
+# This script runs whenever run_once_install_packages_windows.ps1.tmpl changes
+# Hash: {{ include "run_once_install_packages_windows.ps1.tmpl" | sha256sum }}
 
 $ErrorActionPreference = "Stop"
 
 Write-Host "Checking for package updates..." -ForegroundColor Cyan
 
 # Re-run the package installation script
-$installScript = Join-Path {{ .chezmoi.sourceDir | quote }} "run_once_install_packages_windows.ps1"
+$installScript = Join-Path {{ .chezmoi.sourceDir | quote }} "run_once_install_packages_windows.ps1.tmpl"
 
 if (Test-Path $installScript) {
     Write-Host "Running package installation script..." -ForegroundColor Green
@@ -16,3 +17,4 @@ if (Test-Path $installScript) {
 else {
     Write-Host "Warning: Package installation script not found at $installScript" -ForegroundColor Yellow
 }
+{{- end }}
