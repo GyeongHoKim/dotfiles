@@ -1,0 +1,130 @@
+{{- if eq .chezmoi.os "windows" }}
+# Oh My Posh Installation Script
+# This script installs oh-my-posh and configures it for PowerShell
+# It runs once during initial setup
+
+$ErrorActionPreference = "Stop"
+
+Write-Host "Starting Oh My Posh installation..." -ForegroundColor Green
+
+# Function to check if winget is available
+function Test-WingetAvailable {
+    try {
+        $null = winget --version
+        return $true
+    }
+    catch {
+        return $false
+    }
+}
+
+# Check if winget is available
+if (-not (Test-WingetAvailable)) {
+    Write-Host "Error: winget is not available. Please ensure you're running Windows 11 or install App Installer from the Microsoft Store." -ForegroundColor Red
+    exit 1
+}
+
+# Check if oh-my-posh is already installed
+$ohMyPoshInstalled = $false
+try {
+    $null = oh-my-posh --version
+    $ohMyPoshInstalled = $true
+    Write-Host "Oh My Posh is already installed." -ForegroundColor Green
+}
+catch {
+    Write-Host "Oh My Posh is not installed. Installing..." -ForegroundColor Yellow
+}
+
+# Install oh-my-posh if not installed
+if (-not $ohMyPoshInstalled) {
+    Write-Host "Installing Oh My Posh via winget..." -ForegroundColor Cyan
+    try {
+        winget install --id JanDeDobbeleer.OhMyPosh --silent --accept-package-agreements --accept-source-agreements
+        Write-Host "  ✓ Oh My Posh installed successfully" -ForegroundColor Green
+        
+        # Refresh PATH to make oh-my-posh available
+        $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
+    }
+    catch {
+        Write-Host "  ✗ Failed to install Oh My Posh" -ForegroundColor Red
+        Write-Host "    Error: $_" -ForegroundColor Red
+        exit 1
+    }
+}
+
+# Verify installation
+try {
+    $null = oh-my-posh --version
+    Write-Host "Oh My Posh installation verified." -ForegroundColor Green
+}
+catch {
+    Write-Host "Warning: Oh My Posh installation may not be complete. You may need to restart your terminal." -ForegroundColor Yellow
+}
+
+# Install Nerd Font (Meslo recommended)
+Write-Host "`nInstalling Nerd Font (Meslo)..." -ForegroundColor Cyan
+try {
+    oh-my-posh font install Meslo
+    Write-Host "  ✓ Nerd Font installed successfully" -ForegroundColor Green
+    Write-Host "  Note: Please set MesloLGM NF as the default font in your terminal settings" -ForegroundColor Yellow
+}
+catch {
+    Write-Host "  ✗ Failed to install Nerd Font" -ForegroundColor Red
+    Write-Host "    Error: $_" -ForegroundColor Red
+    Write-Host "    You can manually install fonts later with: oh-my-posh font install" -ForegroundColor Yellow
+}
+
+# Configure PowerShell profile
+Write-Host "`nConfiguring PowerShell profile..." -ForegroundColor Cyan
+
+# Get PowerShell profile path
+$profilePath = $PROFILE
+
+# Check if profile exists, create if not
+if (-not (Test-Path $profilePath)) {
+    Write-Host "Creating PowerShell profile..." -ForegroundColor Yellow
+    $profileDir = Split-Path -Parent $profilePath
+    if (-not (Test-Path $profileDir)) {
+        New-Item -ItemType Directory -Path $profileDir -Force | Out-Null
+    }
+    New-Item -ItemType File -Path $profilePath -Force | Out-Null
+    Write-Host "  ✓ PowerShell profile created" -ForegroundColor Green
+}
+
+# Read current profile content
+$profileContent = Get-Content $profilePath -Raw -ErrorAction SilentlyContinue
+
+# Check if oh-my-posh is already configured
+if ($profileContent -match "oh-my-posh init") {
+    Write-Host "  ✓ Oh My Posh is already configured in PowerShell profile" -ForegroundColor Green
+}
+else {
+    # Add oh-my-posh initialization
+    Write-Host "  Adding Oh My Posh initialization to profile..." -ForegroundColor Yellow
+    
+    $ohMyPoshInit = @"
+
+# Initialize Oh My Posh
+if (Get-Command oh-my-posh -ErrorAction SilentlyContinue) {
+    oh-my-posh init pwsh --config `"$env:POSH_THEMES_PATH\paradox.omp.json`" | Invoke-Expression
+}
+"@
+
+    # Append to profile
+    Add-Content -Path $profilePath -Value $ohMyPoshInit
+    Write-Host "  ✓ Oh My Posh initialization added to profile" -ForegroundColor Green
+}
+
+Write-Host "`n========================================" -ForegroundColor Green
+Write-Host "Oh My Posh installation complete!" -ForegroundColor Green
+Write-Host "========================================" -ForegroundColor Green
+Write-Host ""
+Write-Host "Next steps:" -ForegroundColor Yellow
+Write-Host "1. Restart your terminal to apply changes" -ForegroundColor White
+Write-Host "2. Set MesloLGM NF as the default font in your terminal settings" -ForegroundColor White
+Write-Host "3. If the prompt doesn't appear, run: . `$PROFILE" -ForegroundColor White
+Write-Host ""
+Write-Host "To change themes, edit your PowerShell profile and replace 'paradox' with your preferred theme." -ForegroundColor Cyan
+Write-Host "Available themes: https://ohmyposh.dev/docs/themes" -ForegroundColor Cyan
+Write-Host ""
+{{- end }}

@@ -23,6 +23,11 @@ if (Get-Command mise -ErrorAction SilentlyContinue) {
     mise activate pwsh | Out-String | Invoke-Expression
 }
 
+# Initialize Oh My Posh
+if (Get-Command oh-my-posh -ErrorAction SilentlyContinue) {
+    oh-my-posh init pwsh --config "$env:POSH_THEMES_PATH\paradox.omp.json" | Invoke-Expression
+}
+
 # Aliases (matching Linux/macOS setup)
 Set-Alias -Name task -Value go-task -ErrorAction SilentlyContinue
 Set-Alias -Name v -Value nvim -ErrorAction SilentlyContinue
