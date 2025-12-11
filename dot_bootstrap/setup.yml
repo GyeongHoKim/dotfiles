@@ -1,7 +1,7 @@
 ---
 - name: Machine setup
   hosts: localhost
-  become: true
+  become: "{{ ansible_system != 'Darwin' }}"
   connection: local
   gather_facts: true
   vars:
@@ -123,8 +123,6 @@
     - name: Install Homebrew (macOS)
       community.general.homebrew:
         state: present
-      become: true
-      become_user: "{{ remote_regular_user }}"
       when: ansible_system == "Darwin"
 
     - name: Install packages via Homebrew (macOS)
@@ -164,8 +162,6 @@
           - fswatch
           - unar
         state: present
-      become: true
-      become_user: "{{ remote_regular_user }}"
       when: ansible_system == "Darwin"
 
     - name: Install GUI applications via Homebrew Cask (macOS)
@@ -176,8 +172,6 @@
           - docker
           - brave-browser
         state: present
-      become: true
-      become_user: "{{ remote_regular_user }}"
       when: ansible_system == "Darwin"
 
     - name: Change shell to zsh (Linux)
@@ -190,6 +184,7 @@
       ansible.builtin.user:
         name: "{{ remote_regular_user }}"
         shell: /bin/zsh
+      become: true
       when: ansible_system == "Darwin"
 
     - name: Create Go workspace directory
@@ -408,8 +403,6 @@
       community.general.homebrew:
         name: mise
         state: present
-      become: true
-      become_user: "{{ remote_regular_user }}"
       when: ansible_system == "Darwin"
 
     - name: Add kubectl repo (Fedora)
@@ -460,8 +453,6 @@
       community.general.homebrew:
         name: kubectl
         state: present
-      become: true
-      become_user: "{{ remote_regular_user }}"
       when: ansible_system == "Darwin"
 
     - name: Add Hashicorp Repo (Fedora)
@@ -505,8 +496,6 @@
       community.general.homebrew:
         name: terraform
         state: present
-      become: true
-      become_user: "{{ remote_regular_user }}"
       when: ansible_system == "Darwin"
 
     - name: Check if Pulumi is installed
@@ -544,6 +533,7 @@
         dest: /usr/local/bin
         extra_opts: [--strip-components=1]
         creates: /usr/local/bin/pulumi
+      become: true
       when: (pulumi_installed is failed or pulumi_installed.stdout is not search(pulumi_version)) and ansible_system == "Darwin"
 
     - name: Check if the targeted version of flyctl is installed
@@ -578,6 +568,7 @@
         src: "/tmp/flyctl_{{ flyctl_version }}_macOS_x86_64.tar.gz"
         dest: "/usr/local/bin"
         remote_src: true
+      become: true
       when: flyctl_version not in installed_flyctl_version.stdout and ansible_system == "Darwin"
 
     - name: Install Flatpak packages (Linux)
@@ -606,8 +597,6 @@
           - meld
           - db-browser-for-sqlite
         state: present
-      become: true
-      become_user: "{{ remote_regular_user }}"
       when: ansible_system == "Darwin"
 
     - name: Ensure fonts directory (Linux)
