@@ -146,7 +146,6 @@
               - ffmpeg
               - zlib
               - make
-              - patch
               - bzip2
               - readline
               - sqlite
