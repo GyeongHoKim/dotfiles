@@ -3,7 +3,13 @@
 # .bootstrap/setup.yml hash: {{ include "dot_bootstrap/setup.yml" | sha256sum }}
 
 if command -v ansible-playbook &> /dev/null; then
+    {{- if eq .chezmoi.os "darwin" }}
+    # macOS: become is used only when needed, so --ask-become-pass is omitted
+    ansible-playbook {{ joinPath .chezmoi.sourceDir "dot_bootstrap/setup.yml" | quote }}
+    {{- else }}
+    # Linux: entire playbook runs with become: true, so --ask-become-pass is required
     ansible-playbook {{ joinPath .chezmoi.sourceDir "dot_bootstrap/setup.yml" | quote }} --ask-become-pass
+    {{- end }}
 fi
 
 
