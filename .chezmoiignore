@@ -6,7 +6,7 @@ WINDOWS.md
 # Ignore Linux/macOS files on Windows
 run_once_install_ansible.sh
 run_once_install_ohmyzsh.sh
-run_once_install_bob.sh
+run_once_rustup.sh
 run_onchange_bootstrap.sh.tmpl
 run_onchange_reload_gnome-terminal-profiles.sh.tmpl
 .bootstrap/
