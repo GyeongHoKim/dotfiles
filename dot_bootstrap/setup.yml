@@ -120,62 +120,70 @@
         state: present
       when: ansible_os_family == "Debian"
 
-    - name: Install Homebrew (macOS)
-      community.general.homebrew:
-        state: present
-      become: false
+    - name: Homebrew operations (macOS)
       when: ansible_system == "Darwin"
+      become: false
+      block:
+        - name: Install Homebrew (macOS)
+          community.general.homebrew:
+            state: present
 
-    - name: Install packages via Homebrew (macOS)
-      community.general.homebrew:
-        name:
-          - git
-          - htop
-          - vim
-          - firefox
-          - gh
-          - gcc
-          - helm
-          - go-task
-          - ripgrep
-          - poetry
-          - fzf
-          - tmux
-          - ffmpeg
-          - zlib
-          - make
-          - patch
-          - bzip2
-          - readline
-          - sqlite
-          - openssl
-          - libffi
-          - xz
-          - gdbm
-          - luarocks
-          - fd
-          - doctl
-          - helix
-          - lazygit
-          - autoconf
-          - ncurses
-          - libxslt
-          - fswatch
-          - unar
-        state: present
-      become: false
-      when: ansible_system == "Darwin"
+        - name: Install packages via Homebrew (macOS)
+          community.general.homebrew:
+            name:
+              - git
+              - htop
+              - vim
+              - firefox
+              - gh
+              - gcc
+              - helm
+              - go-task
+              - ripgrep
+              - poetry
+              - fzf
+              - tmux
+              - ffmpeg
+              - zlib
+              - make
+              - patch
+              - bzip2
+              - readline
+              - sqlite
+              - openssl
+              - libffi
+              - xz
+              - gdbm
+              - luarocks
+              - fd
+              - doctl
+              - helix
+              - lazygit
+              - autoconf
+              - ncurses
+              - libxslt
+              - fswatch
+              - unar
+              - mise
+              - kubectl
+              - terraform
+            state: present
 
-    - name: Install GUI applications via Homebrew Cask (macOS)
-      community.general.homebrew_cask:
-        name:
-          - blender
-          - visual-studio-code
-          - docker
-          - brave-browser
-        state: present
-      become: false
-      when: ansible_system == "Darwin"
+        - name: Install GUI applications via Homebrew Cask (macOS)
+          community.general.homebrew_cask:
+            name:
+              - blender
+              - visual-studio-code
+              - docker
+              - brave-browser
+              - obs
+              - vlc
+              - obsidian
+              - gimp
+              - insomnia
+              - meld
+              - db-browser-for-sqlite
+            state: present
 
     - name: Change shell to zsh (Linux)
       ansible.builtin.user:
@@ -401,13 +409,6 @@
         update_cache: yes
       when: ansible_os_family == "Debian"
 
-    - name: Install mise (macOS)
-      community.general.homebrew:
-        name: mise
-        state: present
-      become: false
-      when: ansible_system == "Darwin"
-
     - name: Add kubectl repo (Fedora)
       ansible.builtin.yum_repository:
         name: Kubernetes
@@ -452,13 +453,6 @@
         update_cache: yes
       when: ansible_os_family == "Debian"
 
-    - name: Install kubectl (macOS)
-      community.general.homebrew:
-        name: kubectl
-        state: present
-      become: false
-      when: ansible_system == "Darwin"
-
     - name: Add Hashicorp Repo (Fedora)
       ansible.builtin.yum_repository:
         name: hashicorp
@@ -495,13 +489,6 @@
         state: present
         update_cache: yes
       when: ansible_os_family == "Debian"
-
-    - name: Install Terraform (macOS)
-      community.general.homebrew:
-        name: terraform
-        state: present
-      become: false
-      when: ansible_system == "Darwin"
 
     - name: Check if Pulumi is installed
       ansible.builtin.command:
@@ -588,20 +575,6 @@
           - org.sqlitebrowser.sqlitebrowser
         state: present
       when: ansible_system != "Darwin"
-
-    - name: Install GUI applications via Homebrew Cask (macOS) - Additional
-      community.general.homebrew_cask:
-        name:
-          - obs
-          - vlc
-          - obsidian
-          - gimp
-          - insomnia
-          - meld
-          - db-browser-for-sqlite
-        state: present
-      become: false
-      when: ansible_system == "Darwin"
 
     - name: Ensure fonts directory (Linux)
       ansible.builtin.file:
