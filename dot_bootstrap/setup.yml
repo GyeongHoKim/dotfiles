@@ -16,7 +16,7 @@
   tasks:
     - name: Get my user
       ansible.builtin.set_fact:
-        remote_regular_user: "{{ ansible_env.SUDO_USER or ansible_user_id }}"
+        remote_regular_user: "{{ ansible_env.get('SUDO_USER', ansible_user_id) }}"
 
     - name: Install packages (Fedora)
       become: true
