@@ -113,7 +113,7 @@ See **[WINDOWS.md](WINDOWS.md)** for detailed Windows setup instructions.
 
 ```powershell
 $env:GITHUB_USERNAME = "GyeongHoKim"
-iex "&{$(irm 'https://get.chezmoi.io/ps1')}" -- init --apply $env:GITHUB_USERNAME
+& ([scriptblock]::Create((irm 'https://get.chezmoi.io/ps1'))) init --apply $env:GITHUB_USERNAME
 ```
 
 The setup will:
