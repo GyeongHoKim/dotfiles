@@ -1,3 +1,4 @@
+{{- if ne .chezmoi.os "windows" -}}
 #!/bin/bash
 
 install_on_fedora() {
@@ -46,3 +47,4 @@ ansible-playbook ~/.bootstrap/setup.yml --ask-become-pass
 
 echo "Ansible installation complete."
 
+{{- end -}}

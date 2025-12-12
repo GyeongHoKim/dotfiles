@@ -1,3 +1,4 @@
+{{- if ne .chezmoi.os "windows" -}}
 #!/bin/bash
 
 OS="$(uname -s)"
@@ -23,3 +24,4 @@ curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-
 
 # Install bob-nvim
 cargo binstall bob-nvim
+{{- end -}}
