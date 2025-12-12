@@ -79,7 +79,7 @@ $packages = @{
     "sharkdp.fd" = "fd"
     "tmux.tmux" = "tmux"
     "ajeetdsouza.zoxide" = "zoxide"
-    "junegunn.helix" = "Helix"
+    "Helix.Helix" = "Helix"
     "JesseDuffield.lazygit" = "lazygit"
 
     # GUI Applications
@@ -103,19 +103,8 @@ foreach ($package in $packages.GetEnumerator()) {
 }
 
 # Install mise (version manager for Node, Python, Go, Rust)
-Write-Host "`nInstalling mise..." -ForegroundColor Cyan
-try {
-    # Download and install mise for Windows
-    $miseInstaller = "$env:TEMP\mise-installer.ps1"
-    Invoke-WebRequest -Uri "https://mise.jdx.dev/install.ps1" -OutFile $miseInstaller
-    & $miseInstaller
-    Write-Host "  ✓ mise installed successfully" -ForegroundColor Green
-    Write-Host "  Note: You may need to restart your terminal for mise to be available" -ForegroundColor Yellow
-}
-catch {
-    Write-Host "  ✗ Failed to install mise" -ForegroundColor Red
-    Write-Host "    Error: $_" -ForegroundColor Red
-}
+Write-Host "`n" -ForegroundColor Yellow
+Install-WingetPackage -PackageId "jdx.mise" -Name "mise"
 
 # Install bob-nvim (Neovim version manager)
 Write-Host "`nInstalling bob-nvim..." -ForegroundColor Cyan
