@@ -1,0 +1,14 @@
+Host sc.idis.co.kr
+    HostName sc.idis.co.kr
+    User rlarudgh2023
+    PubkeyAcceptedAlgorithms +ssh-rsa
+    HostKeyAlgorithms +ssh-rsa
+    IdentityFile ~/.ssh/id_rsa
+
+Host gitea
+    HostName CENCORED
+    User git
+    Port 222
+    IdentityFile ~/.ssh/id_ed25519
+    AddKeysToAgent yes
+    IdentitiesOnly yes
