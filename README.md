@@ -13,7 +13,7 @@ Windows11:
 
 ```powershell
 $env:GITHUB_USERNAME = "GyeongHoKim"
-iex "&{$(irm 'https://get.chezmoi.io/ps1')}" -- init --apply $env:GITHUB_USERNAME
+iex "&{$(irm 'https://get.chezmoi.io/ps1')} -b '~/bin' --init --apply $env:GITHUB_USERNAME"
 ```
 
 ## What gets installed
