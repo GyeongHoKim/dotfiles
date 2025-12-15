@@ -112,6 +112,7 @@ The setup will:
 See **[WINDOWS.md](WINDOWS.md)** for detailed Windows setup instructions.
 
 ```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
 $env:GITHUB_USERNAME = "GyeongHoKim"
 & ([scriptblock]::Create((irm 'https://get.chezmoi.io/ps1'))) init --apply $env:GITHUB_USERNAME
 ```
