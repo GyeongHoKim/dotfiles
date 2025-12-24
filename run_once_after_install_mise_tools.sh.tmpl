@@ -1,0 +1,17 @@
+{{- if ne .chezmoi.os "windows" -}}
+#!/bin/bash
+
+# Install mise tools after mise configuration is set up
+# This runs once after the mise config file is applied
+
+if command -v mise &> /dev/null; then
+    if [ -f "$HOME/.config/mise/config.toml" ]; then
+        echo "Installing mise tools from config.toml..."
+        mise install
+    else
+        echo "mise config.toml not found, skipping mise install"
+    fi
+else
+    echo "mise not found, skipping mise install"
+fi
+{{- end -}}
