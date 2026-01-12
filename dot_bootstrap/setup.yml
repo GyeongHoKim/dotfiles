@@ -121,7 +121,6 @@
           - wl-clipboard
           - fd-find
           - g++
-          - doctl
           - helix
           - lazygit
           - autoconf
@@ -170,7 +169,6 @@
               - gdbm
               - luarocks
               - fd
-              - doctl
               - helix
               - lazygit
               - autoconf
