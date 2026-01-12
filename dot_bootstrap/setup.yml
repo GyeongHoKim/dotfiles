@@ -84,6 +84,13 @@
       ansible.builtin.shell: /tmp/setup-task-repo.sh
       when: ansible_os_family == "Debian"
 
+    - name: Add Helix PPA repository (Debian/Ubuntu)
+      ansible.builtin.apt_repository:
+        repo: ppa:maveonair/helix-editor
+        state: present
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+
     - name: Install packages (Debian/Ubuntu)
       ansible.builtin.apt:
         update_cache: yes
@@ -118,7 +125,6 @@
           - libgdbm-dev
           - libnsl-dev
           - luarocks
-          - wl-clipboard
           - fd-find
           - g++
           - helix
