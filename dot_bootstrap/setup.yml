@@ -84,7 +84,6 @@
           - gh
           - gnome-tweaks
           - gcc
-          - helm
           - task
           - ripgrep
           - poetry
@@ -453,6 +452,27 @@
     - name: Install kubectl (Debian/Ubuntu)
       ansible.builtin.apt:
         name: kubectl
+        state: present
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+
+    - name: Add Helm GPG key (Debian/Ubuntu)
+      ansible.builtin.get_url:
+        url: https://baltocdn.com/helm/signing-key.asc
+        dest: /etc/apt/keyrings/helm-archive-keyring.gpg
+        mode: '0644'
+      when: ansible_os_family == "Debian"
+
+    - name: Add Helm repo (Debian/Ubuntu)
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/etc/apt/keyrings/helm-archive-keyring.gpg] https://baltocdn.com/helm/stable/debian/ all main"
+        state: present
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+
+    - name: Install Helm (Debian/Ubuntu)
+      ansible.builtin.apt:
+        name: helm
         state: present
         update_cache: yes
       when: ansible_os_family == "Debian"
