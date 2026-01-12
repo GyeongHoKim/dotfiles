@@ -84,10 +84,21 @@
       ansible.builtin.shell: /tmp/setup-task-repo.sh
       when: ansible_os_family == "Debian"
 
-    - name: Add Helix PPA repository (Debian/Ubuntu)
-      ansible.builtin.apt_repository:
-        repo: ppa:maveonair/helix-editor
+    - name: Add software-properties-common for add-apt-repository (Debian/Ubuntu)
+      ansible.builtin.apt:
+        name: software-properties-common
         state: present
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+
+    - name: Add Helix PPA repository (Debian/Ubuntu)
+      ansible.builtin.shell: add-apt-repository ppa:maveonair/helix-editor -y
+      register: helix_ppa_result
+      changed_when: "'Adding repository' in helix_ppa_result.stdout"
+      when: ansible_os_family == "Debian"
+
+    - name: Update apt cache after adding Helix PPA (Debian/Ubuntu)
+      ansible.builtin.apt:
         update_cache: yes
       when: ansible_os_family == "Debian"
 
