@@ -282,11 +282,21 @@
         state: present
       when: ansible_os_family == "RedHat"
 
-    - name: Import Microsoft GPG Key (Debian/Ubuntu)
-      ansible.builtin.get_url:
-        url: https://packages.microsoft.com/keys/microsoft.asc
-        dest: /usr/share/keyrings/microsoft.gpg
-        mode: '0644'
+    - name: Install prerequisites for VS Code (Debian/Ubuntu)
+      ansible.builtin.apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg
+        state: present
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+
+    - name: Add Microsoft GPG key to keyring (Debian/Ubuntu)
+      ansible.builtin.shell: curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft.gpg
+      args:
+        creates: /usr/share/keyrings/microsoft.gpg
       when: ansible_os_family == "Debian"
 
     - name: Add Visual Studio Code Repo (Debian/Ubuntu)
