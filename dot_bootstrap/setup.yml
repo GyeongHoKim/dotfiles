@@ -32,7 +32,6 @@
           - helm
           - go-task
           - ripgrep
-          - poetry
           - zsh
           - fzf
           - tmux
@@ -73,6 +72,7 @@
         state: present
       when: ansible_os_family == "RedHat"
 
+
     - name: Add Task repository (Debian/Ubuntu)
       ansible.builtin.get_url:
         url: https://dl.cloudsmith.io/public/task/task/setup.deb.sh
@@ -97,7 +97,6 @@
           - gcc
           - task
           - ripgrep
-          - poetry
           - zsh
           - fzf
           - tmux
@@ -136,6 +135,7 @@
         state: present
       when: ansible_os_family == "Debian"
 
+
     - name: Homebrew operations (macOS)
       when: ansible_facts["system"] == "Darwin"
       become: false
@@ -156,7 +156,6 @@
               - helm
               - go-task
               - ripgrep
-              - poetry
               - fzf
               - tmux
               - ffmpeg

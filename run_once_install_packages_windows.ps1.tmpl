@@ -106,6 +106,24 @@ foreach ($package in $packages.GetEnumerator()) {
 Write-Host "`n" -ForegroundColor Yellow
 Install-WingetPackage -PackageId "jdx.mise" -Name "mise"
 
+# Install Poetry if Python is available
+Write-Host "`nChecking for Python and installing Poetry..." -ForegroundColor Cyan
+$pythonAvailable = Get-Command py -ErrorAction SilentlyContinue
+
+if ($pythonAvailable) {
+    try {
+        $poetryInstaller = (Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content
+        $poetryInstaller | py -
+        Write-Host "  ✓ Poetry installed successfully" -ForegroundColor Green
+    }
+    catch {
+        Write-Host "  ✗ Failed to install Poetry" -ForegroundColor Red
+        Write-Host "    Error: $_" -ForegroundColor Red
+    }
+} else {
+    Write-Host "  ! Python not found, skipping Poetry installation" -ForegroundColor Yellow
+}
+
 # Install bob-nvim (Neovim version manager)
 Write-Host "`nInstalling bob-nvim..." -ForegroundColor Cyan
 try {
@@ -133,6 +151,7 @@ Write-Host "Next steps:" -ForegroundColor Yellow
 Write-Host "1. Restart your terminal to load new PATH entries" -ForegroundColor White
 Write-Host "2. Run 'mise doctor' to verify mise installation" -ForegroundColor White
 Write-Host "3. Run 'mise install' to install language runtimes (Node, Python, Go, Rust)" -ForegroundColor White
-Write-Host "4. If you haven't already, install bob-nvim after Rust is available" -ForegroundColor White
+Write-Host "4. Poetry should be installed and available" -ForegroundColor White
+Write-Host "5. If you haven't already, install bob-nvim after Rust is available" -ForegroundColor White
 Write-Host ""
 {{- end }}
