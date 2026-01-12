@@ -95,7 +95,7 @@
           - gh
           - gnome-tweaks
           - gcc
-          - go-task
+          - task
           - ripgrep
           - poetry
           - zsh
