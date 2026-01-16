@@ -4,30 +4,46 @@
 OS="$(uname -s)"
 case "${OS}" in
     Linux*)
+        # Check if zsh is installed
+        if ! command -v zsh &> /dev/null; then
+            echo "zsh not found. Attempting to install zsh..."
+            if command -v dnf &> /dev/null; then
+                sudo dnf install -y zsh
+            elif command -v apt-get &> /dev/null; then
+                sudo apt-get update && sudo apt-get install -y zsh
+            else
+                echo "Error: No supported package manager found to install zsh. Please install zsh manually."
+                exit 1
+            fi
+            if ! command -v zsh &> /dev/null; then
+                echo "Error: zsh installation failed. Exiting."
+                exit 1
+            fi
+            echo "zsh installed successfully."
+        fi
         ;;
     Darwin*)
+        # Check if zsh is installed
+        if ! command -v zsh &> /dev/null; then
+            echo "zsh not found. Attempting to install zsh using Homebrew..."
+            if command -v brew &> /dev/null; then
+                brew install zsh
+            else
+                echo "Error: Homebrew not found. Please install Homebrew and zsh manually."
+                exit 1
+            fi
+            if ! command -v zsh &> /dev/null; then
+                echo "Error: zsh installation failed. Exiting."
+                exit 1
+            fi
+            echo "zsh installed successfully."
+        fi
         ;;
     *)
         echo "Unsupported operating system: ${OS}"
         exit 0
         ;;
 esac
-
-if [ ! -d "$HOME/.oh-my-zsh" ]; then
-    echo "Waiting for zsh to be installed..."
-    max_attempts=60 # 60 retries * 5 seconds = 300 seconds (5 minutes)
-    attempt_num=1
-
-    while ! command -v zsh &> /dev/null; do
-        if [ "$attempt_num" -ge "$max_attempts" ]; then
-            echo "Error: zsh not found after $max_attempts attempts (5 minutes). Exiting."
-            exit 1
-        fi
-        echo "zsh not found yet, waiting 5 seconds (attempt $attempt_num/$max_attempts)..."
-        sleep 5
-        attempt_num=$((attempt_num + 1))
-    done
-    echo "zsh found, proceeding with Oh My Zsh installation."
 	echo "Getting ohmyz.sh"
 	sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended --keep-zshrc --skip-chsh
 else
