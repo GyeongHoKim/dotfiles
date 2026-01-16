@@ -68,6 +68,9 @@
           - blender
           - toilet
           - unar
+          - glibc-devel
+          - libstdc++-devel
+          - pkg-config
         state: present
       when: ansible_os_family == "RedHat"
 
