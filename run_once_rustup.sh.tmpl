@@ -4,6 +4,15 @@
 OS="$(uname -s)"
 case "${OS}" in
     Linux*)
+        echo "Installing essential build tools for Rust..."
+        if command -v dnf &> /dev/null; then
+            sudo dnf groupinstall -y "Development Tools"
+        elif command -v apt-get &> /dev/null; then
+            sudo apt-get update && sudo apt-get install -y build-essential
+        else
+            echo "Error: No supported package manager found to install build tools. Please install them manually."
+            exit 1
+        fi
         ;;
     Darwin*)
         ;;
