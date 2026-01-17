@@ -6,7 +6,7 @@ $env:EDITOR = "nvim"
 
 # Add custom paths to PATH
 $pathsToAdd = @(
-
+    "$env:USERPROFILE\.mise\bin", # Add mise shims to PATH
     "$env:USERPROFILE\bin",                         # User binaries
     "$env:USERPROFILE\.cargo\bin",                  # Rust/Cargo binaries
     "$env:USERPROFILE\.scripts\bin"                 # Custom scripts

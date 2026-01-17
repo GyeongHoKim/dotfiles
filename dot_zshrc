@@ -9,6 +9,12 @@ export PATH=$PATH:$HOME/bin
 export PATH=$PATH:$HOME/.cargo/bin
 export PATH="$HOME/.scripts/bin:$PATH"
 
+# Add mise bin to PATH if mise is installed
+if [ -d "$HOME/.mise/bin" ] && ! [[ "$PATH" =~ "$HOME/.mise/bin:" ]]; then
+    PATH="$HOME/.mise/bin:$PATH"
+fi
+
+
 eval "$(mise activate zsh)"
 
 alias task=go-task
