@@ -30,7 +30,7 @@ $env:GITHUB_USERNAME = "GyeongHoKim"
 
 **Editors:**
 
-- Neovim (managed by [bob-nvim](https://github.com/MordechaiHadad/bob))
+- Neovim (configured with LazyVim)
 - Visual Studio Code
 - Helix
 
@@ -104,7 +104,7 @@ The setup will:
 1. Install Ansible
 2. Run the Ansible playbook to install system packages and mise
 3. Install Oh My Zsh
-4. Install bob-nvim (Neovim version manager)
+
 5. Configure mise to auto-install language runtimes on first shell login
 
 ### Windows 11

@@ -6,7 +6,7 @@ $env:EDITOR = "nvim"
 
 # Add custom paths to PATH
 $pathsToAdd = @(
-    "$env:USERPROFILE\.local\share\bob\nvim-bin",  # bob-nvim managed Neovim
+
     "$env:USERPROFILE\bin",                         # User binaries
     "$env:USERPROFILE\.cargo\bin",                  # Rust/Cargo binaries
     "$env:USERPROFILE\.scripts\bin"                 # Custom scripts

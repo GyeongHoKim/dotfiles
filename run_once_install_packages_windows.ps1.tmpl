@@ -124,24 +124,7 @@ if ($pythonAvailable) {
     Write-Host "  ! Python not found, skipping Poetry installation" -ForegroundColor Yellow
 }
 
-# Install bob-nvim (Neovim version manager)
-Write-Host "`nInstalling bob-nvim..." -ForegroundColor Cyan
-try {
-    # Check if Rust/Cargo is available (needed for bob)
-    if (Get-Command cargo -ErrorAction SilentlyContinue) {
-        cargo install --git https://github.com/MordechaiHadad/bob.git
-        Write-Host "  ✓ bob-nvim installed successfully" -ForegroundColor Green
-    }
-    else {
-        Write-Host "  ! Cargo not found. bob-nvim installation skipped." -ForegroundColor Yellow
-        Write-Host "    Run 'mise install rust' after setup, then install bob with:" -ForegroundColor Yellow
-        Write-Host "    cargo install --git https://github.com/MordechaiHadad/bob.git" -ForegroundColor Yellow
-    }
-}
-catch {
-    Write-Host "  ✗ Failed to install bob-nvim" -ForegroundColor Red
-    Write-Host "    Error: $_" -ForegroundColor Red
-}
+
 
 Write-Host "`n========================================" -ForegroundColor Green
 Write-Host "Package installation complete!" -ForegroundColor Green
@@ -152,6 +135,6 @@ Write-Host "1. Restart your terminal to load new PATH entries" -ForegroundColor 
 Write-Host "2. Run 'mise doctor' to verify mise installation" -ForegroundColor White
 Write-Host "3. Run 'mise install' to install language runtimes (Node, Python, Go, Rust)" -ForegroundColor White
 Write-Host "4. Poetry should be installed and available" -ForegroundColor White
-Write-Host "5. If you haven't already, install bob-nvim after Rust is available" -ForegroundColor White
+
 Write-Host ""
 {{- end }}

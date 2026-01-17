@@ -60,12 +60,7 @@ After the installation completes:
    ```powershell
    mise install
    ```
-3. **Install bob-nvim** (Neovim version manager):
-   ```powershell
-   cargo install --git https://github.com/MordechaiHadad/bob.git
-   bob use stable
-   bob install stable
-   ```
+
 
 ## What Gets Installed
 
@@ -229,12 +224,7 @@ chezmoi apply
 
 The Neovim configuration is shared with Linux/macOS and should work identically on Windows.
 
-### Install Neovim via bob
 
-```powershell
-bob install stable
-bob use stable
-```
 
 ### First Launch
 
@@ -245,19 +235,7 @@ On first launch, Neovim will:
 
 This may take a minute. Be patient!
 
-### Neovim Management
 
-```powershell
-# Update Neovim
-bob update
-
-# Use a specific version
-bob use nightly
-bob use 0.9.0
-
-# List installed versions
-bob list
-```
 
 ## Troubleshooting
 
@@ -286,14 +264,7 @@ If you get "execution policy" errors:
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 ```
 
-### bob-nvim installation fails
 
-Ensure Rust is installed first:
-```powershell
-mise install rust
-. $PROFILE  # Reload to get cargo in PATH
-cargo install --git https://github.com/MordechaiHadad/bob.git
-```
 
 ## Differences from Linux/macOS
 
@@ -349,7 +320,7 @@ mise install
 - Chezmoi docs: https://chezmoi.io
 - mise docs: https://mise.jdx.dev
 - PowerShell docs: https://docs.microsoft.com/powershell
-- bob-nvim: https://github.com/MordechaiHadad/bob
+
 
 ## Uninstallation
 
@@ -362,8 +333,7 @@ chezmoi purge
 # Uninstall mise-managed tools
 mise uninstall --all
 
-# Uninstall bob and Neovim
-bob uninstall --all
+
 
 # Optionally uninstall packages via winget
 winget uninstall <package-id>
