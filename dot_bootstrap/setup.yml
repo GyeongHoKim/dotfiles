@@ -24,7 +24,7 @@
         name:
           - git
           - htop
-          - vim
+          - neovim
           - firefox
           - gh
           - gnome-tweaks
@@ -92,7 +92,7 @@
         name:
           - git
           - htop
-          - vim
+          - neovim
           - firefox-esr
           - gh
           - gnome-tweaks
@@ -148,7 +148,7 @@
             name:
               - git
               - htop
-              - vim
+              - neovim
               - firefox
               - gh
               - gcc
@@ -206,6 +206,101 @@
         name: "{{ remote_regular_user }}"
         shell: /bin/zsh
       when: ansible_facts["system"] == "Darwin"
+
+
+    - name: Ensure .config directory exists for remote_regular_user
+      ansible.builtin.file:
+        path: "{{ ansible_env.HOME }}/.config"
+        state: directory
+        mode: "0755"
+        owner: "{{ remote_regular_user }}"
+        group: "{{ remote_regular_user }}"
+      become: false
+      tags:
+        - lazyvim
+
+    - name: Backup existing Neovim config if it exists
+      ansible.builtin.command:
+        cmd: mv "{{ ansible_env.HOME }}/.config/nvim" "{{ ansible_env.HOME }}/.config/nvim.bak"
+      args:
+        creates: "{{ ansible_env.HOME }}/.config/nvim.bak"
+      when: ansible.builtin.stat(path="{{ ansible_env.HOME }}/.config/nvim", follow=False).stat.exists
+      become: false
+      tags:
+        - lazyvim
+
+    - name: Remove old Neovim local share directory
+      ansible.builtin.file:
+        path: "{{ ansible_env.HOME }}/.local/share/nvim"
+        state: absent
+      become: false
+      tags:
+        - lazyvim
+
+    - name: Remove old Neovim cache directory
+      ansible.builtin.file:
+        path: "{{ ansible_env.HOME }}/.cache/nvim"
+        state: absent
+      become: false
+      tags:
+        - lazyvim
+
+    - name: Remove old Helix config directory
+      ansible.builtin.file:
+        path: "{{ ansible_env.HOME }}/.config/helix"
+        state: absent
+      become: false
+      tags:
+        - lazyvim
+
+    - name: Install tree-sitter-cli via mise
+      ansible.builtin.shell:
+        cmd: |
+          # Ensure mise is sourced for the shell
+          export PATH="{{ ansible_env.HOME }}/.mise/bin:$PATH"
+          eval "$(mise activate bash)"
+          mise install tree-sitter-cli@latest
+          mise global tree-sitter-cli@latest
+      args:
+        executable: /bin/bash
+      when:
+        - ansible_facts['env'].get('HOME') is defined
+        - ansible.builtin.stat(path="{{ ansible_env.HOME }}/.mise/bin/mise", follow=False).stat.exists
+      become: false
+      tags:
+        - lazyvim
+
+    - name: Install Node.js LTS via mise
+      ansible.builtin.shell:
+        cmd: |
+          export PATH="{{ ansible_env.HOME }}/.mise/bin:$PATH"
+          eval "$(mise activate bash)"
+          mise install node@lts
+          mise global node@lts
+      args:
+        executable: /bin/bash
+      when:
+        - ansible_facts['env'].get('HOME') is defined
+        - ansible.builtin.stat(path="{{ ansible_env.HOME }}/.mise/bin/mise", follow=False).stat.exists
+      become: false
+      tags:
+        - lazyvim
+
+    - name: Install Python latest via mise
+      ansible.builtin.shell:
+        cmd: |
+          export PATH="{{ ansible_env.HOME }}/.mise/bin:$PATH"
+          eval "$(mise activate bash)"
+          mise install python@latest
+          mise global python@latest
+      args:
+        executable: /bin/bash
+      when:
+        - ansible_facts['env'].get('HOME') is defined
+        - ansible.builtin.stat(path="{{ ansible_env.HOME }}/.mise/bin/mise", follow=False).stat.exists
+      become: false
+      tags:
+        - lazyvim
 
     - name: Create Go workspace directory
       ansible.builtin.file:
