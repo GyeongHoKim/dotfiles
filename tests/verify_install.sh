@@ -20,10 +20,10 @@ check_command() {
 
     if command -v "$cmd" &> /dev/null; then
         echo -e "${GREEN}[PASS]${NC} $description ($cmd)"
-        ((PASSED++))
+        ((PASSED++)) || true
     else
         echo -e "${RED}[FAIL]${NC} $description ($cmd)"
-        ((FAILED++))
+        ((FAILED++)) || true
     fi
 }
 
@@ -33,10 +33,10 @@ check_command_optional() {
 
     if command -v "$cmd" &> /dev/null; then
         echo -e "${GREEN}[PASS]${NC} $description ($cmd)"
-        ((PASSED++))
+        ((PASSED++)) || true
     else
         echo -e "${YELLOW}[SKIP]${NC} $description ($cmd) - optional"
-        ((SKIPPED++))
+        ((SKIPPED++)) || true
     fi
 }
 
@@ -46,10 +46,10 @@ check_file() {
 
     if [[ -f "$file" ]]; then
         echo -e "${GREEN}[PASS]${NC} $description ($file)"
-        ((PASSED++))
+        ((PASSED++)) || true
     else
         echo -e "${RED}[FAIL]${NC} $description ($file)"
-        ((FAILED++))
+        ((FAILED++)) || true
     fi
 }
 
@@ -59,10 +59,10 @@ check_dir() {
 
     if [[ -d "$dir" ]]; then
         echo -e "${GREEN}[PASS]${NC} $description ($dir)"
-        ((PASSED++))
+        ((PASSED++)) || true
     else
         echo -e "${RED}[FAIL]${NC} $description ($dir)"
-        ((FAILED++))
+        ((FAILED++)) || true
     fi
 }
 
@@ -72,16 +72,16 @@ check_flatpak() {
 
     if ! command -v flatpak &> /dev/null; then
         echo -e "${YELLOW}[SKIP]${NC} $description - flatpak not available"
-        ((SKIPPED++))
+        ((SKIPPED++)) || true
         return
     fi
 
     if flatpak list --app 2>/dev/null | grep -q "$app_id"; then
         echo -e "${GREEN}[PASS]${NC} $description ($app_id)"
-        ((PASSED++))
+        ((PASSED++)) || true
     else
         echo -e "${RED}[FAIL]${NC} $description ($app_id)"
-        ((FAILED++))
+        ((FAILED++)) || true
     fi
 }
 
@@ -91,7 +91,7 @@ check_mise_tool() {
 
     if ! command -v mise &> /dev/null; then
         echo -e "${YELLOW}[SKIP]${NC} $description - mise not available"
-        ((SKIPPED++))
+        ((SKIPPED++)) || true
         return
     fi
 
@@ -105,13 +105,13 @@ check_mise_tool() {
     # Check if tool is installed via mise
     if mise list 2>/dev/null | grep -q "$tool"; then
         echo -e "${GREEN}[PASS]${NC} $description (mise: $tool)"
-        ((PASSED++))
+        ((PASSED++)) || true
     elif command -v "$tool" &> /dev/null; then
         echo -e "${GREEN}[PASS]${NC} $description ($tool via PATH)"
-        ((PASSED++))
+        ((PASSED++)) || true
     else
         echo -e "${RED}[FAIL]${NC} $description ($tool)"
-        ((FAILED++))
+        ((FAILED++)) || true
     fi
 }
 
@@ -120,18 +120,18 @@ check_rust() {
         local version
         version=$("$HOME/.cargo/bin/rustc" --version 2>/dev/null || rustc --version 2>/dev/null)
         echo -e "${GREEN}[PASS]${NC} Rust compiler ($version)"
-        ((PASSED++))
+        ((PASSED++)) || true
     else
         echo -e "${RED}[FAIL]${NC} Rust compiler (rustc)"
-        ((FAILED++))
+        ((FAILED++)) || true
     fi
 
     if [[ -f "$HOME/.cargo/bin/cargo" ]] || command -v cargo &> /dev/null; then
         echo -e "${GREEN}[PASS]${NC} Cargo package manager"
-        ((PASSED++))
+        ((PASSED++)) || true
     else
         echo -e "${RED}[FAIL]${NC} Cargo package manager"
-        ((FAILED++))
+        ((FAILED++)) || true
     fi
 }
 
@@ -166,6 +166,9 @@ check_command "rg" "Ripgrep"
 check_command "fzf" "FZF"
 check_command "fd" "fd-find"
 check_command "lazygit" "Lazygit"
+check_command "task" "Task (go-task)"
+check_command "poetry" "Poetry (Python package manager)"
+check_command "luarocks" "LuaRocks"
 
 echo ""
 echo "--- Build Tools ---"
@@ -188,11 +191,21 @@ check_mise_tool "go" "Go"
 echo ""
 echo "--- Container & Infrastructure ---"
 check_command_optional "docker" "Docker"
+check_command_optional "podman" "Podman"
 check_command "kubectl" "kubectl"
 check_command "helm" "Helm"
 check_command "terraform" "Terraform"
 check_command_optional "pulumi" "Pulumi"
 check_command_optional "flyctl" "Fly.io CLI"
+check_command_optional "doctl" "DigitalOcean CLI"
+
+# ===== BROWSERS & SYSTEM =====
+echo ""
+echo "--- Browsers & System ---"
+check_command_optional "firefox" "Firefox"
+check_command_optional "brave-browser" "Brave Browser"
+check_command_optional "gnome-tweaks" "GNOME Tweaks"
+check_command_optional "blender" "Blender"
 
 # ===== FLATPAK APPS (Linux only) =====
 if [[ "$(uname -s)" == "Linux" ]] && command -v flatpak &> /dev/null; then
@@ -220,10 +233,10 @@ fi
 
 if ls "$FONT_DIR"/JetBrainsMono* &> /dev/null 2>&1; then
     echo -e "${GREEN}[PASS]${NC} JetBrains Mono Nerd Font"
-    ((PASSED++))
+    ((PASSED++)) || true
 else
     echo -e "${RED}[FAIL]${NC} JetBrains Mono Nerd Font ($FONT_DIR)"
-    ((FAILED++))
+    ((FAILED++)) || true
 fi
 
 # ===== SUMMARY =====
