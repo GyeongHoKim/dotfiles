@@ -167,26 +167,6 @@ check_mise_tool() {
     fi
 }
 
-check_rust() {
-    if [[ -f "$HOME/.cargo/bin/rustc" ]] || command -v rustc &> /dev/null; then
-        local version
-        version=$("$HOME/.cargo/bin/rustc" --version 2>/dev/null || rustc --version 2>/dev/null)
-        echo -e "${GREEN}[PASS]${NC} Rust compiler ($version)"
-        ((PASSED++)) || true
-    else
-        echo -e "${RED}[FAIL]${NC} Rust compiler (rustc)"
-        ((FAILED++)) || true
-    fi
-
-    if [[ -f "$HOME/.cargo/bin/cargo" ]] || command -v cargo &> /dev/null; then
-        echo -e "${GREEN}[PASS]${NC} Cargo package manager"
-        ((PASSED++)) || true
-    else
-        echo -e "${RED}[FAIL]${NC} Cargo package manager"
-        ((FAILED++)) || true
-    fi
-}
-
 echo "============================================"
 echo "Dotfiles Installation Verification"
 echo "============================================"
@@ -211,7 +191,6 @@ echo "--- Editors ---"
 check_command "nvim" "Neovim"
 check_dir "$HOME/.config/nvim" "Neovim config directory"
 check_command_optional "code" "VS Code"
-check_command_optional "hx" "Helix editor"
 
 echo ""
 echo "--- CLI Development Tools ---"
@@ -231,20 +210,16 @@ check_command "autoconf" "Autoconf"
 
 # ===== LANGUAGE RUNTIMES =====
 echo ""
-echo "--- Rust Toolchain ---"
-check_rust
-
-echo ""
 echo "--- Language Runtimes (via mise) ---"
 check_mise_tool "node" "Node.js"
 check_mise_tool "python" "Python"
 check_mise_tool "go" "Go"
+check_mise_tool "rust" "Rust"
 
 # ===== INFRASTRUCTURE =====
 echo ""
 echo "--- Container & Infrastructure ---"
 check_command_optional "docker" "Docker"
-check_command_optional "podman" "Podman"
 check_command "kubectl" "kubectl"
 check_command "helm" "Helm"
 check_command "terraform" "Terraform"
