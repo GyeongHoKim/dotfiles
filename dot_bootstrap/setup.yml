@@ -94,7 +94,6 @@
           - git
           - htop
           - neovim
-          - firefox-esr
           - gh
           - gnome-tweaks
           - gcc
@@ -135,6 +134,18 @@
           - flatpak
         state: present
       when: ansible_os_family == "Debian"
+
+    - name: Install Firefox (Ubuntu)
+      ansible.builtin.apt:
+        name: firefox
+        state: present
+      when: ansible_distribution == "Ubuntu"
+
+    - name: Install Firefox ESR (Debian)
+      ansible.builtin.apt:
+        name: firefox-esr
+        state: present
+      when: ansible_distribution == "Debian"
 
 
     - name: Homebrew operations (macOS)
