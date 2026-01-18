@@ -179,6 +179,7 @@ echo ""
 
 # ===== CORE TOOLS =====
 echo "--- Package Manager Tools ---"
+check_command_with_path "chezmoi" "$HOME/bin/chezmoi" "Chezmoi"
 check_command "mise" "mise version manager"
 check_command "git" "Git"
 check_command "gh" "GitHub CLI"
