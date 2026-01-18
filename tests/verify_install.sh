@@ -14,6 +14,11 @@ FAILED=0
 PASSED=0
 SKIPPED=0
 
+# Check if running inside a container
+is_container() {
+    [[ -f /.dockerenv ]] || [[ -f /run/.containerenv ]] || grep -qE 'docker|lxc|containerd' /proc/1/cgroup 2>/dev/null
+}
+
 check_command() {
     local cmd=$1
     local description=$2
@@ -37,6 +42,38 @@ check_command_optional() {
     else
         echo -e "${YELLOW}[SKIP]${NC} $description ($cmd) - optional"
         ((SKIPPED++)) || true
+    fi
+}
+
+check_command_alternatives() {
+    local cmds=$1
+    local description=$2
+
+    for cmd in $cmds; do
+        if command -v "$cmd" &> /dev/null; then
+            echo -e "${GREEN}[PASS]${NC} $description ($cmd)"
+            ((PASSED++)) || true
+            return
+        fi
+    done
+    echo -e "${RED}[FAIL]${NC} $description ($cmds)"
+    ((FAILED++)) || true
+}
+
+check_command_with_path() {
+    local cmd=$1
+    local fallback_path=$2
+    local description=$3
+
+    if command -v "$cmd" &> /dev/null; then
+        echo -e "${GREEN}[PASS]${NC} $description ($cmd)"
+        ((PASSED++)) || true
+    elif [[ -x "$fallback_path" ]]; then
+        echo -e "${GREEN}[PASS]${NC} $description ($fallback_path)"
+        ((PASSED++)) || true
+    else
+        echo -e "${RED}[FAIL]${NC} $description ($cmd)"
+        ((FAILED++)) || true
     fi
 }
 
@@ -166,8 +203,8 @@ check_command "rg" "Ripgrep"
 check_command "fzf" "FZF"
 check_command "fd" "fd-find"
 check_command "lazygit" "Lazygit"
-check_command "task" "Task (go-task)"
-check_command "poetry" "Poetry (Python package manager)"
+check_command_alternatives "task go-task" "Task (go-task)"
+check_command_with_path "poetry" "$HOME/.local/bin/poetry" "Poetry (Python package manager)"
 check_command "luarocks" "LuaRocks"
 
 echo ""
@@ -207,19 +244,26 @@ check_command_optional "brave-browser" "Brave Browser"
 check_command_optional "gnome-tweaks" "GNOME Tweaks"
 check_command_optional "blender" "Blender"
 
-# ===== FLATPAK APPS (Linux only) =====
+# ===== FLATPAK APPS (Linux only, skip in containers) =====
 if [[ "$(uname -s)" == "Linux" ]] && command -v flatpak &> /dev/null; then
-    echo ""
-    echo "--- Flatpak Applications ---"
-    check_flatpak "com.obsproject.Studio" "OBS Studio"
-    check_flatpak "org.videolan.VLC" "VLC Media Player"
-    check_flatpak "org.tenacityaudio.Tenacity" "Tenacity Audio"
-    check_flatpak "md.obsidian.Obsidian" "Obsidian"
-    check_flatpak "org.gimp.GIMP" "GIMP"
-    check_flatpak "rest.insomnia.Insomnia" "Insomnia"
-    check_flatpak "com.github.johnfactotum.Foliate" "Foliate"
-    check_flatpak "org.gnome.meld" "Meld"
-    check_flatpak "org.sqlitebrowser.sqlitebrowser" "DB Browser for SQLite"
+    if is_container; then
+        echo ""
+        echo "--- Flatpak Applications (skipped in container) ---"
+        echo -e "${YELLOW}[SKIP]${NC} Flatpak apps - not supported in container environment"
+        ((SKIPPED++)) || true
+    else
+        echo ""
+        echo "--- Flatpak Applications ---"
+        check_flatpak "com.obsproject.Studio" "OBS Studio"
+        check_flatpak "org.videolan.VLC" "VLC Media Player"
+        check_flatpak "org.tenacityaudio.Tenacity" "Tenacity Audio"
+        check_flatpak "md.obsidian.Obsidian" "Obsidian"
+        check_flatpak "org.gimp.GIMP" "GIMP"
+        check_flatpak "rest.insomnia.Insomnia" "Insomnia"
+        check_flatpak "com.github.johnfactotum.Foliate" "Foliate"
+        check_flatpak "org.gnome.meld" "Meld"
+        check_flatpak "org.sqlitebrowser.sqlitebrowser" "DB Browser for SQLite"
+    fi
 fi
 
 # ===== FONTS =====

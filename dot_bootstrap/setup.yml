@@ -295,29 +295,39 @@
       tags:
         - lazyvim
 
-    - name: Backup existing Neovim config if it exists
+    - name: Check if Neovim config is managed by chezmoi
+      ansible.builtin.stat:
+        path: "~{{ remote_regular_user }}/.config/nvim/init.lua"
+      become: false
+      register: neovim_chezmoi_managed
+      tags:
+        - lazyvim
+
+    - name: Backup existing Neovim config if it exists and not managed by chezmoi
       ansible.builtin.command:
         cmd: mv "~{{ remote_regular_user }}/.config/nvim" "~{{ remote_regular_user }}/.config/nvim.bak"
       args:
         creates: "~{{ remote_regular_user }}/.config/nvim.bak"
-      when: neovim_config_stat.stat.exists
+      when: neovim_config_stat.stat.exists and not neovim_chezmoi_managed.stat.exists
       become: false
       tags:
         - lazyvim
 
-    - name: Remove old Neovim local share directory
+    - name: Remove old Neovim local share directory (only if not managed by chezmoi)
       ansible.builtin.file:
         path: "~{{ remote_regular_user }}/.local/share/nvim"
         state: absent
       become: false
+      when: not neovim_chezmoi_managed.stat.exists
       tags:
         - lazyvim
 
-    - name: Remove old Neovim cache directory
+    - name: Remove old Neovim cache directory (only if not managed by chezmoi)
       ansible.builtin.file:
         path: "~{{ remote_regular_user }}/.cache/nvim"
         state: absent
       become: false
+      when: not neovim_chezmoi_managed.stat.exists
       tags:
         - lazyvim
 
@@ -397,19 +407,20 @@
         gpgkey: https://brave-browser-rpm-release.s3.brave.com/brave-core.asc
         gpgcheck: true
         enabled: true
-      when: ansible_os_family == "RedHat"
+      when: ansible_os_family == "RedHat" and ansible_architecture == "x86_64"
 
     - name: Import Brave Browser GPG Key (Fedora)
       ansible.builtin.rpm_key:
         key: https://brave-browser-rpm-release.s3.brave.com/brave-core.asc
         state: present
-      when: ansible_os_family == "RedHat"
+      when: ansible_os_family == "RedHat" and ansible_architecture == "x86_64"
 
     - name: Install Brave Browser (Fedora)
       ansible.builtin.dnf:
         name: brave-browser
         state: present
-      when: ansible_os_family == "RedHat"
+      when: ansible_os_family == "RedHat" and ansible_architecture == "x86_64"
+      ignore_errors: yes
 
     - name: Import Brave Browser GPG Key (Debian/Ubuntu)
       ansible.builtin.get_url:
@@ -764,6 +775,7 @@
         flatpakrepo_url: https://dl.flathub.org/repo/flathub.flatpakrepo
         state: present
       when: ansible_facts["system"] != "Darwin"
+      ignore_errors: yes
 
     - name: Install Flatpak packages (Linux)
       community.general.flatpak:
@@ -779,6 +791,7 @@
           - org.sqlitebrowser.sqlitebrowser
         state: present
       when: ansible_facts["system"] != "Darwin"
+      ignore_errors: yes
 
     - name: Ensure fonts directory (Linux)
       ansible.builtin.file:
