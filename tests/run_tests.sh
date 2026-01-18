@@ -7,6 +7,7 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+LOG_BASE_DIR="/tmp/dotfiles-logs"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -16,27 +17,39 @@ NC='\033[0m'
 build_and_test() {
     local os=$1
     local dockerfile="$SCRIPT_DIR/docker/Dockerfile.$os"
+    local log_dir="$LOG_BASE_DIR/$os"
 
     if [[ ! -f "$dockerfile" ]]; then
         echo -e "${RED}Dockerfile not found: $dockerfile${NC}"
         return 1
     fi
 
+    # Create log directory for this OS
+    mkdir -p "$log_dir"
+    rm -rf "${log_dir:?}"/*
+
     echo -e "${YELLOW}[$os] Building test container...${NC}"
-    if ! docker build -f "$dockerfile" -t "dotfiles-test-$os" "$PROJECT_DIR" > /tmp/dotfiles-build-$os.log 2>&1; then
+    if ! docker build -f "$dockerfile" -t "dotfiles-test-$os" "$PROJECT_DIR" > "$log_dir/build.log" 2>&1; then
         echo -e "${RED}[$os] Build FAILED${NC}"
-        cat /tmp/dotfiles-build-$os.log
+        cat "$log_dir/build.log"
         return 1
     fi
 
     echo -e "${YELLOW}[$os] Running test...${NC}"
-    if docker run --rm "dotfiles-test-$os" > /tmp/dotfiles-test-$os.log 2>&1; then
+    # Run with volume mapping to capture debug info
+    if docker run --rm \
+        -v "$log_dir:/debug" \
+        -e "DEBUG_DIR=/debug" \
+        "dotfiles-test-$os" > "$log_dir/test.log" 2>&1; then
         echo -e "${GREEN}[$os] PASSED${NC}"
         return 0
     else
         echo -e "${RED}[$os] FAILED${NC}"
-        echo -e "${YELLOW}[$os] Last 50 lines of output:${NC}"
-        tail -50 /tmp/dotfiles-test-$os.log
+        echo -e "${YELLOW}[$os] Test output (last 50 lines):${NC}"
+        tail -50 "$log_dir/test.log"
+        echo ""
+        echo -e "${YELLOW}[$os] Debug files available at: $log_dir/${NC}"
+        ls -la "$log_dir/" 2>/dev/null || true
         return 1
     fi
 }
@@ -88,7 +101,7 @@ run_parallel() {
     done
 
     echo "============================================"
-    echo "Logs saved to /tmp/dotfiles-test-*.log"
+    echo "Logs saved to $LOG_BASE_DIR/<os>/"
     echo "============================================"
 
     if [[ $failed -gt 0 ]]; then
