@@ -12,6 +12,7 @@ NC='\033[0m' # No Color
 
 FAILED=0
 PASSED=0
+SKIPPED=0
 
 check_command() {
     local cmd=$1
@@ -23,6 +24,19 @@ check_command() {
     else
         echo -e "${RED}[FAIL]${NC} $description ($cmd)"
         ((FAILED++))
+    fi
+}
+
+check_command_optional() {
+    local cmd=$1
+    local description=$2
+
+    if command -v "$cmd" &> /dev/null; then
+        echo -e "${GREEN}[PASS]${NC} $description ($cmd)"
+        ((PASSED++))
+    else
+        echo -e "${YELLOW}[SKIP]${NC} $description ($cmd) - optional"
+        ((SKIPPED++))
     fi
 }
 
@@ -52,11 +66,81 @@ check_dir() {
     fi
 }
 
+check_flatpak() {
+    local app_id=$1
+    local description=$2
+
+    if ! command -v flatpak &> /dev/null; then
+        echo -e "${YELLOW}[SKIP]${NC} $description - flatpak not available"
+        ((SKIPPED++))
+        return
+    fi
+
+    if flatpak list --app 2>/dev/null | grep -q "$app_id"; then
+        echo -e "${GREEN}[PASS]${NC} $description ($app_id)"
+        ((PASSED++))
+    else
+        echo -e "${RED}[FAIL]${NC} $description ($app_id)"
+        ((FAILED++))
+    fi
+}
+
+check_mise_tool() {
+    local tool=$1
+    local description=$2
+
+    if ! command -v mise &> /dev/null; then
+        echo -e "${YELLOW}[SKIP]${NC} $description - mise not available"
+        ((SKIPPED++))
+        return
+    fi
+
+    # Source mise if available
+    if [[ -f "$HOME/.local/bin/mise" ]]; then
+        eval "$("$HOME/.local/bin/mise" activate bash 2>/dev/null)" || true
+    elif command -v mise &> /dev/null; then
+        eval "$(mise activate bash 2>/dev/null)" || true
+    fi
+
+    # Check if tool is installed via mise
+    if mise list 2>/dev/null | grep -q "$tool"; then
+        echo -e "${GREEN}[PASS]${NC} $description (mise: $tool)"
+        ((PASSED++))
+    elif command -v "$tool" &> /dev/null; then
+        echo -e "${GREEN}[PASS]${NC} $description ($tool via PATH)"
+        ((PASSED++))
+    else
+        echo -e "${RED}[FAIL]${NC} $description ($tool)"
+        ((FAILED++))
+    fi
+}
+
+check_rust() {
+    if [[ -f "$HOME/.cargo/bin/rustc" ]] || command -v rustc &> /dev/null; then
+        local version
+        version=$("$HOME/.cargo/bin/rustc" --version 2>/dev/null || rustc --version 2>/dev/null)
+        echo -e "${GREEN}[PASS]${NC} Rust compiler ($version)"
+        ((PASSED++))
+    else
+        echo -e "${RED}[FAIL]${NC} Rust compiler (rustc)"
+        ((FAILED++))
+    fi
+
+    if [[ -f "$HOME/.cargo/bin/cargo" ]] || command -v cargo &> /dev/null; then
+        echo -e "${GREEN}[PASS]${NC} Cargo package manager"
+        ((PASSED++))
+    else
+        echo -e "${RED}[FAIL]${NC} Cargo package manager"
+        ((FAILED++))
+    fi
+}
+
 echo "============================================"
 echo "Dotfiles Installation Verification"
 echo "============================================"
 echo ""
 
+# ===== CORE TOOLS =====
 echo "--- Package Manager Tools ---"
 check_command "mise" "mise version manager"
 check_command "git" "Git"
@@ -73,39 +157,89 @@ echo ""
 echo "--- Editors ---"
 check_command "nvim" "Neovim"
 check_dir "$HOME/.config/nvim" "Neovim config directory"
+check_command_optional "code" "VS Code"
+check_command_optional "hx" "Helix editor"
 
 echo ""
 echo "--- CLI Development Tools ---"
 check_command "rg" "Ripgrep"
 check_command "fzf" "FZF"
 check_command "fd" "fd-find"
+check_command "lazygit" "Lazygit"
 
 echo ""
 echo "--- Build Tools ---"
 check_command "gcc" "GCC"
 check_command "make" "Make"
+check_command "autoconf" "Autoconf"
+
+# ===== LANGUAGE RUNTIMES =====
+echo ""
+echo "--- Rust Toolchain ---"
+check_rust
 
 echo ""
+echo "--- Language Runtimes (via mise) ---"
+check_mise_tool "node" "Node.js"
+check_mise_tool "python" "Python"
+check_mise_tool "go" "Go"
+
+# ===== INFRASTRUCTURE =====
+echo ""
 echo "--- Container & Infrastructure ---"
-check_command "docker" "Docker"
+check_command_optional "docker" "Docker"
 check_command "kubectl" "kubectl"
 check_command "helm" "Helm"
 check_command "terraform" "Terraform"
+check_command_optional "pulumi" "Pulumi"
+check_command_optional "flyctl" "Fly.io CLI"
 
+# ===== FLATPAK APPS (Linux only) =====
+if [[ "$(uname -s)" == "Linux" ]] && command -v flatpak &> /dev/null; then
+    echo ""
+    echo "--- Flatpak Applications ---"
+    check_flatpak "com.obsproject.Studio" "OBS Studio"
+    check_flatpak "org.videolan.VLC" "VLC Media Player"
+    check_flatpak "org.tenacityaudio.Tenacity" "Tenacity Audio"
+    check_flatpak "md.obsidian.Obsidian" "Obsidian"
+    check_flatpak "org.gimp.GIMP" "GIMP"
+    check_flatpak "rest.insomnia.Insomnia" "Insomnia"
+    check_flatpak "com.github.johnfactotum.Foliate" "Foliate"
+    check_flatpak "org.gnome.meld" "Meld"
+    check_flatpak "org.sqlitebrowser.sqlitebrowser" "DB Browser for SQLite"
+fi
+
+# ===== FONTS =====
 echo ""
-echo "--- Additional Tools ---"
-check_command "code" "VS Code"
-check_command "lazygit" "Lazygit"
+echo "--- Fonts ---"
+if [[ "$(uname -s)" == "Darwin" ]]; then
+    FONT_DIR="$HOME/Library/Fonts"
+else
+    FONT_DIR="$HOME/.fonts"
+fi
 
+if ls "$FONT_DIR"/JetBrainsMono* &> /dev/null 2>&1; then
+    echo -e "${GREEN}[PASS]${NC} JetBrains Mono Nerd Font"
+    ((PASSED++))
+else
+    echo -e "${RED}[FAIL]${NC} JetBrains Mono Nerd Font ($FONT_DIR)"
+    ((FAILED++))
+fi
+
+# ===== SUMMARY =====
 echo ""
 echo "============================================"
-echo "Results: ${GREEN}$PASSED passed${NC}, ${RED}$FAILED failed${NC}"
+echo "Results Summary"
+echo "============================================"
+echo -e "  ${GREEN}Passed${NC}:  $PASSED"
+echo -e "  ${RED}Failed${NC}:  $FAILED"
+echo -e "  ${YELLOW}Skipped${NC}: $SKIPPED"
 echo "============================================"
 
 if [[ $FAILED -gt 0 ]]; then
     echo -e "${RED}Some checks failed!${NC}"
     exit 1
 else
-    echo -e "${GREEN}All checks passed!${NC}"
+    echo -e "${GREEN}All required checks passed!${NC}"
     exit 0
 fi
