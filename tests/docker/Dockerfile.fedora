@@ -20,12 +20,11 @@ WORKDIR /home/testuser
 ENV HOME=/home/testuser
 ENV USER=testuser
 
-# Copy verification script
-COPY --chown=testuser:testuser tests/verify_install.sh /home/testuser/verify_install.sh
-RUN chmod +x /home/testuser/verify_install.sh
+# Copy project files
+COPY --chown=testuser:testuser . /home/testuser/dotfiles
 
-# Default command: install chezmoi and apply dotfiles, then verify
+# Default command: install chezmoi and apply dotfiles from local source, then verify
 CMD ["/bin/bash", "-c", "\
-    sh -c \"$(curl -fsLS get.chezmoi.io)\" -- init --apply GyeongHoKim && \
-    /home/testuser/verify_install.sh \
+    sh -c \"$(curl -fsLS get.chezmoi.io)\" -- init --apply --source /home/testuser/dotfiles && \
+    /home/testuser/dotfiles/tests/verify_install.sh \
 "]
