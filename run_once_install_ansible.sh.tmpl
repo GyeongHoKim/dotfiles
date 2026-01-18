@@ -42,8 +42,10 @@ case "${OS}" in
         ;;
 esac
 
+# Install required Ansible collections
+ansible-galaxy collection install community.general
 
-ansible-playbook ~/.bootstrap/setup.yml --ask-become-pass
+ansible-playbook ~/.bootstrap/setup.yml
 
 echo "Ansible installation complete."
 

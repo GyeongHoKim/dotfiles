@@ -8,7 +8,7 @@
   hosts: localhost
   become: true
   connection: local
-  gather_facts: false
+  gather_facts: true
   vars:
     flyctl_version: "0.1.130"
     pulumi_version: "v3.94.2"
@@ -71,6 +71,7 @@
           - glibc-devel
           - libstdc++-devel
           - pkg-config
+          - flatpak
         state: present
       when: ansible_os_family == "RedHat"
 
@@ -131,6 +132,7 @@
           - blender
           - toilet
           - unar
+          - flatpak
         state: present
       when: ansible_os_family == "Debian"
 
@@ -695,6 +697,13 @@
       args:
         creates: /usr/local/bin/flyctl
       when: (installed_flyctl_version is failed or flyctl_version not in installed_flyctl_version.stdout) and ansible_facts["system"] == "Darwin"
+
+    - name: Add Flathub repository (Linux)
+      community.general.flatpak_remote:
+        name: flathub
+        flatpakrepo_url: https://dl.flathub.org/repo/flathub.flatpakrepo
+        state: present
+      when: ansible_facts["system"] != "Darwin"
 
     - name: Install Flatpak packages (Linux)
       community.general.flatpak:
