@@ -29,12 +29,11 @@ $ohMyPoshInstalled = $false
 if (Get-Command oh-my-posh -ErrorAction SilentlyContinue) {
     $ohMyPoshInstalled = $true
     Write-Host "Oh My Posh is already installed." -ForegroundColor Green
-} else {
-    Write-Host "Oh My Posh is not installed. Installing..." -ForegroundColor Yellow
 }
 
-# Install oh-my-posh if not installed
 if (-not $ohMyPoshInstalled) {
+    Write-Host "Oh My Posh is not installed. Installing..." -ForegroundColor Yellow
+
     Write-Host "Installing Oh My Posh via winget..." -ForegroundColor Cyan
     try {
         winget install --id JanDeDobbeleer.OhMyPosh --silent --accept-package-agreements --accept-source-agreements
