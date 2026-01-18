@@ -60,21 +60,36 @@ check_command_alternatives() {
     ((FAILED++)) || true
 }
 
+check_command_with_paths() {
+    local cmd=$1
+    local description=$2
+    shift 2
+    local fallback_paths=("$@")
+
+    if command -v "$cmd" &> /dev/null; then
+        echo -e "${GREEN}[PASS]${NC} $description ($cmd)"
+        ((PASSED++)) || true
+        return
+    fi
+
+    for path in "${fallback_paths[@]}"; do
+        if [[ -x "$path" ]]; then
+            echo -e "${GREEN}[PASS]${NC} $description ($path)"
+            ((PASSED++)) || true
+            return
+        fi
+    done
+
+    echo -e "${RED}[FAIL]${NC} $description ($cmd)"
+    ((FAILED++)) || true
+}
+
 check_command_with_path() {
     local cmd=$1
     local fallback_path=$2
     local description=$3
 
-    if command -v "$cmd" &> /dev/null; then
-        echo -e "${GREEN}[PASS]${NC} $description ($cmd)"
-        ((PASSED++)) || true
-    elif [[ -x "$fallback_path" ]]; then
-        echo -e "${GREEN}[PASS]${NC} $description ($fallback_path)"
-        ((PASSED++)) || true
-    else
-        echo -e "${RED}[FAIL]${NC} $description ($cmd)"
-        ((FAILED++)) || true
-    fi
+    check_command_with_paths "$cmd" "$description" "$fallback_path"
 }
 
 check_file() {
@@ -179,7 +194,7 @@ echo ""
 
 # ===== CORE TOOLS =====
 echo "--- Package Manager Tools ---"
-check_command_with_path "chezmoi" "$HOME/bin/chezmoi" "Chezmoi"
+check_command_with_paths "chezmoi" "Chezmoi" "$HOME/bin/chezmoi" "$HOME/.local/bin/chezmoi" "/usr/local/bin/chezmoi"
 check_command "mise" "mise version manager"
 check_command "git" "Git"
 check_command "gh" "GitHub CLI"

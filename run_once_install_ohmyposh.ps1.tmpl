@@ -101,18 +101,18 @@ if ($profileContent -match "oh-my-posh init") {
 else {
     # Add oh-my-posh initialization
     Write-Host "  Adding Oh My Posh initialization to profile..." -ForegroundColor Yellow
-    
-    $ohMyPoshInit = @"
 
-# Initialize Oh My Posh
-if (Get-Command oh-my-posh -ErrorAction SilentlyContinue) {
-    oh-my-posh init pwsh --config `"$env:POSH_THEMES_PATH\paradox.omp.json`" | Invoke-Expression
-}
-"@
+    # Build initialization content line by line to avoid here-string issues
+    $ohMyPoshInit = @()
+    $ohMyPoshInit += ""
+    $ohMyPoshInit += "# Initialize Oh My Posh"
+    $ohMyPoshInit += "if (Get-Command oh-my-posh -ErrorAction SilentlyContinue) {"
+    $ohMyPoshInit += '    oh-my-posh init pwsh --config "$env:POSH_THEMES_PATH\paradox.omp.json" | Invoke-Expression'
+    $ohMyPoshInit += "}"
 
     # Append to profile
-    Add-Content -Path $profilePath -Value $ohMyPoshInit
-    Write-Host "  ✓ Oh My Posh initialization added to profile" -ForegroundColor Green
+    $ohMyPoshInit | Out-File -FilePath $profilePath -Append -Encoding utf8
+    Write-Host "  Oh My Posh initialization added to profile" -ForegroundColor Green
 }
 
 Write-Host "`n========================================" -ForegroundColor Green
@@ -124,7 +124,7 @@ Write-Host "1. Restart your terminal to apply changes" -ForegroundColor White
 Write-Host "2. Set MesloLGM NF as the default font in your terminal settings" -ForegroundColor White
 Write-Host "3. If the prompt doesn't appear, run: . `$PROFILE" -ForegroundColor White
 Write-Host ""
-Write-Host "To change themes, edit your PowerShell profile and replace 'paradox' with your preferred theme." -ForegroundColor Cyan
+Write-Host "To change themes, edit your PowerShell profile and replace paradox with your preferred theme." -ForegroundColor Cyan
 Write-Host "Available themes: https://ohmyposh.dev/docs/themes" -ForegroundColor Cyan
 Write-Host ""
 {{- end }}
