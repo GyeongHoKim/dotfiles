@@ -5,8 +5,8 @@ if [[ "$(uname)" != "Linux" ]]; then
   exit 0
 fi
 
-# Check if dconf is available
-if ! command -v dconf &> /dev/null; then
+# Check if dconf is available and we have a display
+if ! command -v dconf &> /dev/null || [[ -z "$DISPLAY" ]]; then
   exit 0
 fi
 
