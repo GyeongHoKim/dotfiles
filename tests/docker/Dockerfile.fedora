@@ -1,0 +1,31 @@
+FROM fedora:latest
+
+# Install basic dependencies
+RUN dnf install -y \
+    curl \
+    git \
+    sudo \
+    which \
+    && dnf clean all
+
+# Create test user with sudo access
+RUN useradd -m -s /bin/bash testuser && \
+    echo "testuser ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+# Switch to test user
+USER testuser
+WORKDIR /home/testuser
+
+# Set environment variables
+ENV HOME=/home/testuser
+ENV USER=testuser
+
+# Copy verification script
+COPY --chown=testuser:testuser tests/verify_install.sh /home/testuser/verify_install.sh
+RUN chmod +x /home/testuser/verify_install.sh
+
+# Default command: install chezmoi and apply dotfiles, then verify
+CMD ["/bin/bash", "-c", "\
+    sh -c \"$(curl -fsLS get.chezmoi.io)\" -- init --apply GyeongHoKim && \
+    /home/testuser/verify_install.sh \
+"]

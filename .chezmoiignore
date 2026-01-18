@@ -1,5 +1,7 @@
 README.md
 WINDOWS.md
+tests/
+.github/
 
 # Platform-specific ignores
 {{- if eq .chezmoi.os "windows" }}

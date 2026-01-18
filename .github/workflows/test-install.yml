@@ -1,0 +1,102 @@
+name: Test Dotfiles Installation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  # Run weekly to catch package changes
+  schedule:
+    - cron: '0 0 * * 0'
+  # Allow manual trigger
+  workflow_dispatch:
+
+jobs:
+  test-fedora:
+    name: Test on Fedora
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and test Fedora container
+        run: |
+          docker build -f tests/docker/Dockerfile.fedora -t dotfiles-test-fedora .
+          docker run --rm dotfiles-test-fedora
+
+  test-ubuntu:
+    name: Test on Ubuntu
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and test Ubuntu container
+        run: |
+          docker build -f tests/docker/Dockerfile.ubuntu -t dotfiles-test-ubuntu .
+          docker run --rm dotfiles-test-ubuntu
+
+  test-debian:
+    name: Test on Debian
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and test Debian container
+        run: |
+          docker build -f tests/docker/Dockerfile.debian -t dotfiles-test-debian .
+          docker run --rm dotfiles-test-debian
+
+  test-macos:
+    name: Test on macOS
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install chezmoi and apply dotfiles
+        run: |
+          sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply $GITHUB_REPOSITORY_OWNER
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run verification
+        run: |
+          chmod +x tests/verify_install.sh
+          ./tests/verify_install.sh
+
+  test-windows:
+    name: Test on Windows
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install chezmoi
+        run: |
+          Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
+          (irm -useb https://get.chezmoi.io/ps1) | powershell -c -
+        shell: pwsh
+
+      - name: Initialize and apply dotfiles
+        run: |
+          $env:Path = "$env:USERPROFILE\bin;$env:Path"
+          chezmoi init --apply $env:GITHUB_REPOSITORY_OWNER
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run verification
+        run: |
+          .\tests\verify_install.ps1
+        shell: pwsh
