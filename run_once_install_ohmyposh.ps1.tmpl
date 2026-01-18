@@ -43,7 +43,9 @@ if (-not $ohMyPoshInstalled) {
         Write-Host "  ✓ Oh My Posh installed successfully" -ForegroundColor Green
         
         # Refresh PATH to make oh-my-posh available
-        $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
+        $machinePath = [System.Environment]::GetEnvironmentVariable('Path', 'Machine')
+        $userPath = [System.Environment]::GetEnvironmentVariable('Path', 'User')
+        $env:Path = $machinePath + ';' + $userPath
     }
     catch {
         Write-Host "  ✗ Failed to install Oh My Posh" -ForegroundColor Red
