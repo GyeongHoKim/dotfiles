@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Local test runner for dotfiles
-# Usage: ./tests/run_tests.sh [fedora|ubuntu|debian|all|parallel]
+# Usage: ./tests/run_tests.sh [fedora|ubuntu|debian|darwin|windows|all|parallel]
 
 set -e
 
@@ -148,6 +148,24 @@ case "${1:-parallel}" in
     debian)
         build_and_test debian
         ;;
+    darwin|macos)
+        echo -e "${YELLOW}macOS tests are only available in CI (GitHub Actions).${NC}"
+        echo "See: https://github.com/$(git remote get-url origin 2>/dev/null | sed -E 's#.+github\.com[:/](.+)\.git#\1#')/actions"
+        echo ""
+        echo "The CI workflow runs on macos-latest runner and:"
+        echo "  1. Installs chezmoi"
+        echo "  2. Applies dotfiles"
+        echo "  3. Runs tests/verify_install.sh"
+        ;;
+    windows)
+        echo -e "${YELLOW}Windows tests are only available in CI (GitHub Actions).${NC}"
+        echo "See: https://github.com/$(git remote get-url origin 2>/dev/null | sed -E 's#.+github\.com[:/](.+)\.git#\1#')/actions"
+        echo ""
+        echo "The CI workflow runs on windows-latest runner and:"
+        echo "  1. Installs chezmoi via PowerShell"
+        echo "  2. Applies dotfiles"
+        echo "  3. Runs tests/verify_install.ps1"
+        ;;
     all)
         run_sequential
         ;;
@@ -155,14 +173,16 @@ case "${1:-parallel}" in
         run_parallel
         ;;
     *)
-        echo "Usage: $0 [fedora|ubuntu|debian|all|parallel]"
+        echo "Usage: $0 [fedora|ubuntu|debian|darwin|windows|all|parallel]"
         echo ""
         echo "Options:"
-        echo "  fedora    - Test Fedora only"
-        echo "  ubuntu    - Test Ubuntu only"
-        echo "  debian    - Test Debian only"
-        echo "  all       - Test all platforms sequentially"
-        echo "  parallel  - Test all platforms in parallel (default)"
+        echo "  fedora    - Test Fedora only (Docker)"
+        echo "  ubuntu    - Test Ubuntu only (Docker)"
+        echo "  debian    - Test Debian only (Docker)"
+        echo "  darwin    - Show macOS test info (CI only)"
+        echo "  windows   - Show Windows test info (CI only)"
+        echo "  all       - Test all Linux platforms sequentially"
+        echo "  parallel  - Test all Linux platforms in parallel (default)"
         exit 1
         ;;
 esac
