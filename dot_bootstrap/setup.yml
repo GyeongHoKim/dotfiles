@@ -18,8 +18,13 @@
       ansible.builtin.set_fact:
         remote_regular_user: "{{ ansible_env.get('SUDO_USER', ansible_user_id) }}"
 
-    - name: Install packages (Fedora)
-      become: true
+    - name: Add lazygit COPR repository (Fedora)
+      ansible.builtin.command:
+        cmd: dnf copr enable atim/lazygit -y
+      when: ansible_os_family == "RedHat"
+      changed_when: false
+
+    - name: Install core packages (Fedora)
       ansible.builtin.dnf:
         name:
           - git
@@ -36,14 +41,39 @@
           - fzf
           - tmux
           - ffmpeg-free
-          - zlib
-          - zlib-devel
           - make
           - patch
           - bzip2
+          - sqlite
+          - autoconf
+          - fd-find
+          - gcc-c++
+          - doctl
+          - lazygit
+          - inotify-tools
+          - blender
+          - toilet
+          - unar
+          - pkg-config
+          - flatpak
+        state: present
+      when: ansible_os_family == "RedHat"
+
+    - name: Install development groups (Fedora)
+      ansible.builtin.dnf:
+        name:
+          - "@development-tools"
+          - "@c-development"
+        state: present
+      when: ansible_os_family == "RedHat"
+
+    - name: Install development libraries (Fedora)
+      ansible.builtin.dnf:
+        name:
+          - zlib
+          - zlib-devel
           - bzip2-devel
           - readline-devel
-          - sqlite
           - sqlite-devel
           - openssl-devel
           - tk-devel
@@ -53,25 +83,11 @@
           - gdbm-libs
           - libnsl2
           - luarocks
-          - wl-clipboard
-          - fd-find
-          - gcc-c++
-          - doctl
-          - lazygit
-          - "@Development Tools"
-          - "@C Development Tools and Libraries"
-          - autoconf
           - ncurses-devel
           - libxslt
           - podman-compose
-          - inotify-tools
-          - blender
-          - toilet
-          - unar
           - glibc-devel
           - libstdc++-devel
-          - pkg-config
-          - flatpak
         state: present
       when: ansible_os_family == "RedHat"
 
@@ -131,6 +147,8 @@
           - toilet
           - unar
           - flatpak
+          - python3-venv
+          - python3-pip
         state: present
       when: ansible_os_family == "Debian"
 
@@ -220,6 +238,44 @@
       when: ansible_facts["system"] == "Darwin"
 
 
+    - name: Add mise config manager (Fedora)
+      ansible.builtin.yum_repository:
+        name: mise
+        description: mise Repo
+        baseurl: https://mise.jdx.dev/rpm
+        gpgkey: https://mise.jdx.dev/gpg-key.pub
+        gpgcheck: true
+        enabled: true
+      when: ansible_os_family == "RedHat"
+
+    - name: Install mise (Fedora)
+      ansible.builtin.dnf:
+        name: mise
+        state: present
+      when: ansible_os_family == "RedHat"
+
+    - name: Import mise GPG key (Debian/Ubuntu)
+      ansible.builtin.shell: |
+        curl -fsSL https://mise.jdx.dev/gpg-key.pub | gpg --dearmor -o /usr/share/keyrings/mise-archive-keyring.gpg
+      args:
+        creates: /usr/share/keyrings/mise-archive-keyring.gpg
+      when: ansible_os_family == "Debian"
+
+    - name: Add mise config manager (Debian/Ubuntu)
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/usr/share/keyrings/mise-archive-keyring.gpg] https://mise.jdx.dev/deb stable main"
+        state: present
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+
+    - name: Install mise (Debian/Ubuntu)
+      ansible.builtin.apt:
+        name: mise
+        state: present
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+
+
     - name: Ensure .config directory exists for remote_regular_user
       ansible.builtin.file:
         path: "~{{ remote_regular_user }}/.config"
@@ -231,12 +287,20 @@
       tags:
         - lazyvim
 
+    - name: Check if Neovim config exists
+      ansible.builtin.stat:
+        path: "~{{ remote_regular_user }}/.config/nvim"
+      become: false
+      register: neovim_config_stat
+      tags:
+        - lazyvim
+
     - name: Backup existing Neovim config if it exists
       ansible.builtin.command:
         cmd: mv "~{{ remote_regular_user }}/.config/nvim" "~{{ remote_regular_user }}/.config/nvim.bak"
       args:
         creates: "~{{ remote_regular_user }}/.config/nvim.bak"
-      when: ansible.builtin.stat(path="~{{ remote_regular_user }}/.config/nvim", follow=False).stat.exists
+      when: neovim_config_stat.stat.exists
       become: false
       tags:
         - lazyvim
@@ -265,19 +329,11 @@
       tags:
         - lazyvim
 
-    - name: Install tree-sitter-cli via mise
-      ansible.builtin.shell:
-        cmd: |
-          # Ensure mise is sourced for the shell
-          export PATH="~{{ remote_regular_user }}/.mise/bin:$PATH"
-          eval "$(mise activate bash)"
-          mise install tree-sitter-cli@latest
-          mise global tree-sitter-cli@latest
-      args:
-        executable: /bin/bash
-      when:
-        - ansible_facts['env'].get('HOME') is defined
-        - ansible.builtin.stat(path="~{{ remote_regular_user }}/.mise/bin/mise", follow=False).stat.exists
+    - name: Check if mise is available
+      ansible.builtin.command: which mise
+      register: mise_check
+      ignore_errors: true
+      changed_when: false
       become: false
       tags:
         - lazyvim
@@ -285,15 +341,24 @@
     - name: Install Node.js LTS via mise
       ansible.builtin.shell:
         cmd: |
-          export PATH="~{{ remote_regular_user }}/.mise/bin:$PATH"
           eval "$(mise activate bash)"
           mise install node@lts
           mise global node@lts
       args:
         executable: /bin/bash
-      when:
-        - ansible_facts['env'].get('HOME') is defined
-        - ansible.builtin.stat(path="~{{ remote_regular_user }}/.mise/bin/mise", follow=False).stat.exists
+      when: mise_check.rc == 0
+      become: false
+      tags:
+        - lazyvim
+
+    - name: Install tree-sitter-cli via npm
+      ansible.builtin.shell:
+        cmd: |
+          eval "$(mise activate bash)"
+          npm install -g tree-sitter-cli
+      args:
+        executable: /bin/bash
+      when: mise_check.rc == 0
       become: false
       tags:
         - lazyvim
@@ -301,15 +366,12 @@
     - name: Install Python latest via mise
       ansible.builtin.shell:
         cmd: |
-          export PATH="~{{ remote_regular_user }}/.mise/bin:$PATH"
           eval "$(mise activate bash)"
           mise install python@latest
           mise global python@latest
       args:
         executable: /bin/bash
-      when:
-        - ansible_facts['env'].get('HOME') is defined
-        - ansible.builtin.stat(path="~{{ remote_regular_user }}/.mise/bin/mise", follow=False).stat.exists
+      when: mise_check.rc == 0
       become: false
       tags:
         - lazyvim
@@ -356,9 +418,14 @@
         mode: '0644'
       when: ansible_os_family == "Debian"
 
+    - name: Set architecture fact for Debian
+      ansible.builtin.set_fact:
+        debian_arch: "{{ 'amd64' if ansible_architecture == 'x86_64' else 'arm64' if ansible_architecture == 'aarch64' else ansible_architecture }}"
+      when: ansible_os_family == "Debian"
+
     - name: Add Brave Browser Repo (Debian/Ubuntu)
       ansible.builtin.apt_repository:
-        repo: "deb [signed-by=/usr/share/keyrings/brave-browser-archive-keyring.gpg arch=amd64] https://brave-browser-apt-release.s3.brave.com/ stable main"
+        repo: "deb [signed-by=/usr/share/keyrings/brave-browser-archive-keyring.gpg arch={{ debian_arch }}] https://brave-browser-apt-release.s3.brave.com/ stable main"
         state: present
         update_cache: yes
       when: ansible_os_family == "Debian"
@@ -455,15 +522,15 @@
       when: ansible_os_family == "Debian"
 
     - name: Add Docker GPG key (Debian/Ubuntu)
-      ansible.builtin.get_url:
-        url: https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg
-        dest: /usr/share/keyrings/docker-archive-keyring.gpg
-        mode: '0644'
+      ansible.builtin.shell: |
+        curl -fsSL https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+      args:
+        creates: /usr/share/keyrings/docker-archive-keyring.gpg
       when: ansible_os_family == "Debian"
 
     - name: Add Docker repo (Debian/Ubuntu)
       ansible.builtin.apt_repository:
-        repo: "deb [signed-by=/usr/share/keyrings/docker-archive-keyring.gpg arch={{ ansible_architecture }}] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
+        repo: "deb [signed-by=/usr/share/keyrings/docker-archive-keyring.gpg arch={{ debian_arch }}] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
         state: present
         update_cache: yes
       when: ansible_os_family == "Debian"
@@ -493,12 +560,6 @@
         append: true
       when: ansible_facts["system"] != "Darwin"
 
-    - name: Add lazygit COPR repository (Fedora)
-      ansible.builtin.command:
-        cmd: dnf copr enable atim/lazygit -y
-      when: ansible_os_family == "RedHat"
-      changed_when: false
-
     - name: Get latest lazygit version (Debian/Ubuntu)
       ansible.builtin.shell: |
         curl -s "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep -Po '"tag_name": "v\K[^"]*'
@@ -516,43 +577,6 @@
       when: ansible_os_family == "Debian" and lazygit_version.stdout is defined
       args:
         creates: /usr/local/bin/lazygit
-
-    - name: Add mise config manager (Fedora)
-      ansible.builtin.yum_repository:
-        name: mise
-        description: mise Repo
-        baseurl: https://mise.jdx.dev/rpm
-        gpgkey: https://mise.jdx.dev/gpg-key.pub
-        gpgcheck: true
-        enabled: true
-      when: ansible_os_family == "RedHat"
-
-    - name: Install mise (Fedora)
-      ansible.builtin.dnf:
-        name: mise
-        state: present
-      when: ansible_os_family == "RedHat"
-
-    - name: Import mise GPG key (Debian/Ubuntu)
-      ansible.builtin.get_url:
-        url: https://mise.jdx.dev/gpg-key.pub
-        dest: /usr/share/keyrings/mise-archive-keyring.gpg
-        mode: '0644'
-      when: ansible_os_family == "Debian"
-
-    - name: Add mise config manager (Debian/Ubuntu)
-      ansible.builtin.apt_repository:
-        repo: "deb [signed-by=/usr/share/keyrings/mise-archive-keyring.gpg] https://mise.jdx.dev/deb stable main"
-        state: present
-        update_cache: yes
-      when: ansible_os_family == "Debian"
-
-    - name: Install mise (Debian/Ubuntu)
-      ansible.builtin.apt:
-        name: mise
-        state: present
-        update_cache: yes
-      when: ansible_os_family == "Debian"
 
     - name: Add kubectl repo (Fedora)
       ansible.builtin.yum_repository:
@@ -578,10 +602,10 @@
       when: ansible_os_family == "Debian"
 
     - name: Add kubectl GPG key (Debian/Ubuntu)
-      ansible.builtin.get_url:
-        url: https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key
-        dest: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-        mode: '0644'
+      ansible.builtin.shell: |
+        curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+      args:
+        creates: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
       when: ansible_os_family == "Debian"
 
     - name: Add kubectl repo (Debian/Ubuntu)
@@ -599,16 +623,17 @@
       when: ansible_os_family == "Debian"
 
     - name: Add Helm GPG key (Debian/Ubuntu)
-      ansible.builtin.get_url:
-        url: https://baltocdn.com/helm/signing-key.asc
-        dest: /etc/apt/keyrings/helm-archive-keyring.gpg
-        mode: '0644'
+      ansible.builtin.shell: |
+        curl -fsSL https://packages.buildkite.com/helm-linux/helm-debian/gpgkey | gpg --dearmor -o /usr/share/keyrings/helm.gpg
+      args:
+        creates: /usr/share/keyrings/helm.gpg
       when: ansible_os_family == "Debian"
 
     - name: Add Helm repo (Debian/Ubuntu)
       ansible.builtin.apt_repository:
-        repo: "deb [signed-by=/etc/apt/keyrings/helm-archive-keyring.gpg] https://baltocdn.com/helm/stable/debian/ all main"
+        repo: "deb [signed-by=/usr/share/keyrings/helm.gpg] https://packages.buildkite.com/helm-linux/helm-debian/any/ any main"
         state: present
+        filename: helm-stable-debian
         update_cache: yes
       when: ansible_os_family == "Debian"
 
@@ -636,15 +661,22 @@
       when: ansible_os_family == "RedHat"
 
     - name: Add Hashicorp GPG key (Debian/Ubuntu)
-      ansible.builtin.get_url:
-        url: https://apt.releases.hashicorp.com/gpg
-        dest: /usr/share/keyrings/hashicorp-archive-keyring.gpg
-        mode: '0644'
+      ansible.builtin.shell: |
+        curl -fsSL https://apt.releases.hashicorp.com/gpg | gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+      args:
+        creates: /usr/share/keyrings/hashicorp-archive-keyring.gpg
       when: ansible_os_family == "Debian"
 
     - name: Add Hashicorp Repo (Debian/Ubuntu)
       ansible.builtin.apt_repository:
         repo: "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com {{ ansible_distribution_release }} main"
+        state: present
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+
+    - name: Install Terraform (Debian/Ubuntu)
+      ansible.builtin.apt:
+        name: terraform
         state: present
         update_cache: yes
       when: ansible_os_family == "Debian"
