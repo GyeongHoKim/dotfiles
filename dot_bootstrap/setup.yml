@@ -16,13 +16,13 @@
   tasks:
     - name: Get my user
       ansible.builtin.set_fact:
-        remote_regular_user: "{{ ansible_env.get('SUDO_USER', ansible_user_id) }}"
-        remote_user_group: "{{ 'staff' if ansible_facts['system'] == 'Darwin' else ansible_env.get('SUDO_USER', ansible_user_id) }}"
+        remote_regular_user: "{{ ansible_env.get('SUDO_USER', ansible_facts["user_id"]) }}"
+        remote_user_group: "{{ 'staff' if ansible_facts['system'] == 'Darwin' else ansible_env.get('SUDO_USER', ansible_facts["user_id"]) }}"
 
     - name: Add lazygit COPR repository (Fedora)
       ansible.builtin.command:
         cmd: dnf copr enable atim/lazygit -y
-      when: ansible_os_family == "RedHat"
+      when: ansible_facts["os_family"] == "RedHat"
       changed_when: false
 
     - name: Install core packages (Fedora)
@@ -56,7 +56,7 @@
           - pkg-config
           - flatpak
         state: present
-      when: ansible_os_family == "RedHat"
+      when: ansible_facts["os_family"] == "RedHat"
 
     - name: Install development groups (Fedora)
       ansible.builtin.dnf:
@@ -64,7 +64,7 @@
           - "@development-tools"
           - "@c-development"
         state: present
-      when: ansible_os_family == "RedHat"
+      when: ansible_facts["os_family"] == "RedHat"
 
     - name: Install development libraries (Fedora)
       ansible.builtin.dnf:
@@ -88,7 +88,7 @@
           - glibc-devel
           - libstdc++-devel
         state: present
-      when: ansible_os_family == "RedHat"
+      when: ansible_facts["os_family"] == "RedHat"
 
 
     - name: Add Task repository (Debian/Ubuntu)
@@ -96,11 +96,11 @@
         url: https://dl.cloudsmith.io/public/task/task/setup.deb.sh
         dest: /tmp/setup-task-repo.sh
         mode: '0755'
-      when: ansible_os_family == "Debian"
+      when: ansible_facts["os_family"] == "Debian"
 
     - name: Install Task repository (Debian/Ubuntu)
       ansible.builtin.shell: /tmp/setup-task-repo.sh
-      when: ansible_os_family == "Debian"
+      when: ansible_facts["os_family"] == "Debian"
 
     - name: Install packages (Debian/Ubuntu)
       ansible.builtin.apt:
@@ -149,14 +149,14 @@
           - python3-venv
           - python3-pip
         state: present
-      when: ansible_os_family == "Debian"
+      when: ansible_facts["os_family"] == "Debian"
 
     - name: Create fd symlink (Debian/Ubuntu)
       ansible.builtin.file:
         src: /usr/bin/fdfind
         dest: /usr/local/bin/fd
         state: link
-      when: ansible_os_family == "Debian"
+      when: ansible_facts["os_family"] == "Debian"
 
 
 
@@ -226,7 +226,7 @@
           ansible.builtin.set_fact:
             docker_desktop_url: >-
               {{ 'https://desktop.docker.com/mac/main/arm64/Docker.dmg'
-                 if ansible_architecture == 'arm64'
+                 if ansible_facts["architecture"] == 'arm64'
                  else 'https://desktop.docker.com/mac/main/amd64/Docker.dmg' }}
           when: 
             - ansible_facts["system"] == "Darwin"
@@ -274,7 +274,7 @@
           failed_when: false # Ignore if already installed or not Apple Silicon
           when:
             - ansible_facts["system"] == "Darwin"
-            - ansible_architecture == 'arm64'
+            - ansible_facts["architecture"] == 'arm64'
             - lookup('env', 'GITHUB_ACTIONS') != 'true'
 
         - name: Unmount Docker Desktop DMG (macOS)
@@ -333,34 +333,34 @@
         gpgkey: https://mise.jdx.dev/gpg-key.pub
         gpgcheck: true
         enabled: true
-      when: ansible_os_family == "RedHat"
+      when: ansible_facts["os_family"] == "RedHat"
 
     - name: Install mise (Fedora)
       ansible.builtin.dnf:
         name: mise
         state: present
-      when: ansible_os_family == "RedHat"
+      when: ansible_facts["os_family"] == "RedHat"
 
     - name: Import mise GPG key (Debian/Ubuntu)
       ansible.builtin.shell: |
         curl -fsSL https://mise.jdx.dev/gpg-key.pub | gpg --dearmor -o /usr/share/keyrings/mise-archive-keyring.gpg
       args:
         creates: /usr/share/keyrings/mise-archive-keyring.gpg
-      when: ansible_os_family == "Debian"
+      when: ansible_facts["os_family"] == "Debian"
 
     - name: Add mise config manager (Debian/Ubuntu)
       ansible.builtin.apt_repository:
         repo: "deb [signed-by=/usr/share/keyrings/mise-archive-keyring.gpg] https://mise.jdx.dev/deb stable main"
         state: present
         update_cache: yes
-      when: ansible_os_family == "Debian"
+      when: ansible_facts["os_family"] == "Debian"
 
     - name: Install mise (Debian/Ubuntu)
       ansible.builtin.apt:
         name: mise
         state: present
         update_cache: yes
-      when: ansible_os_family == "Debian"
+      when: ansible_facts["os_family"] == "Debian"
 
 
     - name: Ensure .config directory exists for remote_regular_user
@@ -476,7 +476,7 @@
       ansible.builtin.dnf:
         name: dnf-plugins-core
         state: present
-      when: ansible_os_family == "RedHat"
+      when: ansible_facts["os_family"] == "RedHat"
 
     - name: Add Brave Browser Repo (Fedora)
       ansible.builtin.yum_repository:
@@ -486,19 +486,19 @@
         gpgkey: https://brave-browser-rpm-release.s3.brave.com/brave-core.asc
         gpgcheck: true
         enabled: true
-      when: ansible_os_family == "RedHat" and ansible_architecture == "x86_64"
+      when: ansible_facts["os_family"] == "RedHat" and ansible_facts["architecture"] == "x86_64"
 
     - name: Import Brave Browser GPG Key (Fedora)
       ansible.builtin.rpm_key:
         key: https://brave-browser-rpm-release.s3.brave.com/brave-core.asc
         state: present
-      when: ansible_os_family == "RedHat" and ansible_architecture == "x86_64"
+      when: ansible_facts["os_family"] == "RedHat" and ansible_facts["architecture"] == "x86_64"
 
     - name: Install Brave Browser (Fedora)
       ansible.builtin.dnf:
         name: brave-browser
         state: present
-      when: ansible_os_family == "RedHat" and ansible_architecture == "x86_64"
+      when: ansible_facts["os_family"] == "RedHat" and ansible_facts["architecture"] == "x86_64"
       ignore_errors: yes
 
     - name: Import Brave Browser GPG Key (Debian/Ubuntu)
@@ -506,26 +506,26 @@
         url: https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg
         dest: /usr/share/keyrings/brave-browser-archive-keyring.gpg
         mode: '0644'
-      when: ansible_os_family == "Debian"
+      when: ansible_facts["os_family"] == "Debian"
 
     - name: Set architecture fact for Debian
       ansible.builtin.set_fact:
-        debian_arch: "{{ 'amd64' if ansible_architecture == 'x86_64' else 'arm64' if ansible_architecture == 'aarch64' else ansible_architecture }}"
-      when: ansible_os_family == "Debian"
+        debian_arch: "{{ 'amd64' if ansible_facts["architecture"] == 'x86_64' else 'arm64' if ansible_facts["architecture"] == 'aarch64' else ansible_facts["architecture"] }}"
+      when: ansible_facts["os_family"] == "Debian"
 
     - name: Add Brave Browser Repo (Debian/Ubuntu)
       ansible.builtin.apt_repository:
         repo: "deb [signed-by=/usr/share/keyrings/brave-browser-archive-keyring.gpg arch={{ debian_arch }}] https://brave-browser-apt-release.s3.brave.com/ stable main"
         state: present
         update_cache: yes
-      when: ansible_os_family == "Debian"
+      when: ansible_facts["os_family"] == "Debian"
 
     - name: Install Brave Browser (Debian/Ubuntu)
       ansible.builtin.apt:
         name: brave-browser
         state: present
         update_cache: yes
-      when: ansible_os_family == "Debian"
+      when: ansible_facts["os_family"] == "Debian"
 
     - name: Add VSCodium Repo (Fedora)
       ansible.builtin.yum_repository:
@@ -537,20 +537,20 @@
         repo_gpgcheck: true
         enabled: true
         metadata_expire: 3600
-      when: ansible_os_family == "RedHat"
+      when: ansible_facts["os_family"] == "RedHat"
 
     - name: Install VSCodium (Fedora)
       ansible.builtin.dnf:
         name: codium
         state: present
-      when: ansible_os_family == "RedHat"
+      when: ansible_facts["os_family"] == "RedHat"
 
     - name: Add VSCodium GPG key (Debian/Ubuntu)
       ansible.builtin.shell: |
         wget -qO - https://gitlab.com/paulcarroty/vscodium-deb-rpm-repo/raw/master/pub.gpg | gpg --dearmor | dd of=/usr/share/keyrings/vscodium-archive-keyring.gpg
       args:
         creates: /usr/share/keyrings/vscodium-archive-keyring.gpg
-      when: ansible_os_family == "Debian"
+      when: ansible_facts["os_family"] == "Debian"
 
     - name: Add VSCodium Repo (Debian/Ubuntu)
       ansible.builtin.apt_repository:
@@ -558,24 +558,24 @@
         state: present
         filename: vscodium
         update_cache: yes
-      when: ansible_os_family == "Debian"
+      when: ansible_facts["os_family"] == "Debian"
 
     - name: Install VSCodium (Debian/Ubuntu)
       ansible.builtin.apt:
         name: codium
         state: present
         update_cache: yes
-      when: ansible_os_family == "Debian"
+      when: ansible_facts["os_family"] == "Debian"
 
     - name: Add Docker repo (Fedora)
       ansible.builtin.yum_repository:
         name: docker
         description: Docker repo
-        baseurl: "https://download.docker.com/linux/fedora/{{ ansible_distribution_major_version }}/{{ ansible_architecture }}/stable"
+        baseurl: "https://download.docker.com/linux/fedora/{{ ansible_facts["distribution_major_version"] }}/{{ ansible_facts["architecture"] }}/stable"
         gpgkey: "https://download.docker.com/linux/fedora/gpg"
         gpgcheck: true
         enabled: true
-      when: ansible_os_family == "RedHat"
+      when: ansible_facts["os_family"] == "RedHat"
 
     - name: Install Docker (Fedora)
       ansible.builtin.dnf:
@@ -586,7 +586,7 @@
           - docker-buildx-plugin
           - docker-compose-plugin
         state: present
-      when: ansible_os_family == "RedHat"
+      when: ansible_facts["os_family"] == "RedHat"
 
     - name: Install prerequisites for Docker (Debian/Ubuntu)
       ansible.builtin.apt:
@@ -596,21 +596,21 @@
           - gnupg
         state: present
         update_cache: yes
-      when: ansible_os_family == "Debian"
+      when: ansible_facts["os_family"] == "Debian"
 
     - name: Add Docker GPG key (Debian/Ubuntu)
       ansible.builtin.shell: |
-        curl -fsSL https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+        curl -fsSL https://download.docker.com/linux/{{ ansible_facts["distribution"] | lower }}/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
       args:
         creates: /usr/share/keyrings/docker-archive-keyring.gpg
-      when: ansible_os_family == "Debian"
+      when: ansible_facts["os_family"] == "Debian"
 
     - name: Add Docker repo (Debian/Ubuntu)
       ansible.builtin.apt_repository:
-        repo: "deb [signed-by=/usr/share/keyrings/docker-archive-keyring.gpg arch={{ debian_arch }}] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
+        repo: "deb [signed-by=/usr/share/keyrings/docker-archive-keyring.gpg arch={{ debian_arch }}] https://download.docker.com/linux/{{ ansible_facts["distribution"] | lower }} {{ ansible_facts["distribution_release"] }} stable"
         state: present
         update_cache: yes
-      when: ansible_os_family == "Debian"
+      when: ansible_facts["os_family"] == "Debian"
 
     - name: Install Docker (Debian/Ubuntu)
       ansible.builtin.apt:
@@ -622,7 +622,7 @@
           - docker-compose-plugin
         state: present
         update_cache: yes
-      when: ansible_os_family == "Debian"
+      when: ansible_facts["os_family"] == "Debian"
 
     - name: Add Docker group (Linux)
       ansible.builtin.group:
@@ -641,17 +641,17 @@
       ansible.builtin.shell: |
         curl -s "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep -Po '"tag_name": "v\K[^"]*'
       register: lazygit_version
-      when: ansible_os_family == "Debian"
+      when: ansible_facts["os_family"] == "Debian"
       changed_when: false
 
     - name: Download and install lazygit (Debian/Ubuntu)
       ansible.builtin.shell: |
         cd /tmp
-        curl -Lo lazygit.tar.gz "https://github.com/jesseduffield/lazygit/releases/latest/download/lazygit_{{ lazygit_version.stdout }}_Linux_{{ 'x86_64' if ansible_architecture == 'x86_64' else 'arm64' }}.tar.gz"
+        curl -Lo lazygit.tar.gz "https://github.com/jesseduffield/lazygit/releases/latest/download/lazygit_{{ lazygit_version.stdout }}_Linux_{{ 'x86_64' if ansible_facts["architecture"] == 'x86_64' else 'arm64' }}.tar.gz"
         tar xf lazygit.tar.gz lazygit
         install lazygit /usr/local/bin
         rm lazygit lazygit.tar.gz
-      when: ansible_os_family == "Debian" and lazygit_version.stdout is defined
+      when: ansible_facts["os_family"] == "Debian" and lazygit_version.stdout is defined
       args:
         creates: /usr/local/bin/lazygit
 
@@ -663,48 +663,48 @@
         gpgkey: https://pkgs.k8s.io/core:/stable:/v1.28/rpm/repodata/repomd.xml.key
         gpgcheck: true
         enabled: true
-      when: ansible_os_family == "RedHat"
+      when: ansible_facts["os_family"] == "RedHat"
 
     - name: Install kubectl (Fedora)
       ansible.builtin.dnf:
         name: kubectl
         state: present
-      when: ansible_os_family == "RedHat"
+      when: ansible_facts["os_family"] == "RedHat"
 
     - name: Create keyrings directory (Debian/Ubuntu)
       ansible.builtin.file:
         path: /etc/apt/keyrings
         state: directory
         mode: '0755'
-      when: ansible_os_family == "Debian"
+      when: ansible_facts["os_family"] == "Debian"
 
     - name: Add kubectl GPG key (Debian/Ubuntu)
       ansible.builtin.shell: |
         curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
       args:
         creates: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-      when: ansible_os_family == "Debian"
+      when: ansible_facts["os_family"] == "Debian"
 
     - name: Add kubectl repo (Debian/Ubuntu)
       ansible.builtin.apt_repository:
         repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /"
         state: present
         update_cache: yes
-      when: ansible_os_family == "Debian"
+      when: ansible_facts["os_family"] == "Debian"
 
     - name: Install kubectl (Debian/Ubuntu)
       ansible.builtin.apt:
         name: kubectl
         state: present
         update_cache: yes
-      when: ansible_os_family == "Debian"
+      when: ansible_facts["os_family"] == "Debian"
 
     - name: Add Helm GPG key (Debian/Ubuntu)
       ansible.builtin.shell: |
         curl -fsSL https://packages.buildkite.com/helm-linux/helm-debian/gpgkey | gpg --dearmor -o /usr/share/keyrings/helm.gpg
       args:
         creates: /usr/share/keyrings/helm.gpg
-      when: ansible_os_family == "Debian"
+      when: ansible_facts["os_family"] == "Debian"
 
     - name: Add Helm repo (Debian/Ubuntu)
       ansible.builtin.apt_repository:
@@ -712,14 +712,14 @@
         state: present
         filename: helm-stable-debian
         update_cache: yes
-      when: ansible_os_family == "Debian"
+      when: ansible_facts["os_family"] == "Debian"
 
     - name: Install Helm (Debian/Ubuntu)
       ansible.builtin.apt:
         name: helm
         state: present
         update_cache: yes
-      when: ansible_os_family == "Debian"
+      when: ansible_facts["os_family"] == "Debian"
 
     - name: Add Hashicorp Repo (Fedora)
       ansible.builtin.yum_repository:
@@ -729,41 +729,41 @@
         gpgkey: https://rpm.releases.hashicorp.com/gpg
         gpgcheck: true
         enabled: true
-      when: ansible_os_family == "RedHat"
+      when: ansible_facts["os_family"] == "RedHat"
 
     - name: Install Terraform (Fedora)
       ansible.builtin.dnf:
         name: terraform
         state: present
-      when: ansible_os_family == "RedHat"
+      when: ansible_facts["os_family"] == "RedHat"
 
     - name: Add Hashicorp GPG key (Debian/Ubuntu)
       ansible.builtin.shell: |
         curl -fsSL https://apt.releases.hashicorp.com/gpg | gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
       args:
         creates: /usr/share/keyrings/hashicorp-archive-keyring.gpg
-      when: ansible_os_family == "Debian"
+      when: ansible_facts["os_family"] == "Debian"
 
     - name: Add Hashicorp Repo (Debian/Ubuntu)
       ansible.builtin.apt_repository:
-        repo: "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com {{ ansible_distribution_release }} main"
+        repo: "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com {{ ansible_facts["distribution_release"] }} main"
         state: present
         update_cache: yes
-      when: ansible_os_family == "Debian"
+      when: ansible_facts["os_family"] == "Debian"
 
     - name: Install Terraform (Debian/Ubuntu)
       ansible.builtin.apt:
         name: terraform
         state: present
         update_cache: yes
-      when: ansible_os_family == "Debian"
+      when: ansible_facts["os_family"] == "Debian"
 
     - name: Install Terraform (Debian/Ubuntu)
       ansible.builtin.apt:
         name: terraform
         state: present
         update_cache: yes
-      when: ansible_os_family == "Debian"
+      when: ansible_facts["os_family"] == "Debian"
 
     - name: Check if Pulumi is installed
       ansible.builtin.command:
@@ -789,7 +789,7 @@
 
     - name: Set Pulumi architecture for macOS
       ansible.builtin.set_fact:
-        pulumi_arch: "{{ 'arm64' if ansible_architecture == 'arm64' else 'x64' }}"
+        pulumi_arch: "{{ 'arm64' if ansible_facts["architecture"] == 'arm64' else 'x64' }}"
       when: ansible_facts["system"] == "Darwin"
 
     - name: Download Pulumi SDK (macOS)
