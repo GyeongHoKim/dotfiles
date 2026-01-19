@@ -886,3 +886,9 @@
       become_user: "{{ remote_regular_user }}"
       args:
         creates: "~{{ remote_regular_user }}/.claude/local/claude"
+
+    - name: Install Tailscale (Linux)
+      ansible.builtin.shell: curl -fsSL https://tailscale.com/install.sh | sh
+      args:
+        creates: /usr/bin/tailscale
+      when: ansible_facts["system"] == "Linux"
