@@ -775,16 +775,21 @@
         creates: /usr/local/bin/pulumi
       when: (pulumi_installed is failed or pulumi_installed.stdout is not search(pulumi_version)) and ansible_facts["system"] != "Darwin"
 
+    - name: Set Pulumi architecture for macOS
+      ansible.builtin.set_fact:
+        pulumi_arch: "{{ 'arm64' if ansible_architecture == 'arm64' else 'x64' }}"
+      when: ansible_facts["system"] == "Darwin"
+
     - name: Download Pulumi SDK (macOS)
       ansible.builtin.get_url:
-        url: "https://get.pulumi.com/releases/sdk/pulumi-{{ pulumi_version }}-darwin-x64.tar.gz"
-        dest: "/tmp/pulumi-{{ pulumi_version }}-darwin-x64.tar.gz"
+        url: "https://get.pulumi.com/releases/sdk/pulumi-{{ pulumi_version }}-darwin-{{ pulumi_arch }}.tar.gz"
+        dest: "/tmp/pulumi-{{ pulumi_version }}-darwin-{{ pulumi_arch }}.tar.gz"
         mode: "0644"
       when: (pulumi_installed is failed or pulumi_installed.stdout is not search(pulumi_version)) and ansible_facts["system"] == "Darwin"
 
     - name: Extract Pulumi to /usr/local/bin (macOS)
       ansible.builtin.command:
-        cmd: tar -xzf /tmp/pulumi-{{ pulumi_version }}-darwin-x64.tar.gz -C /usr/local/bin --strip-components=1
+        cmd: tar -xzf /tmp/pulumi-{{ pulumi_version }}-darwin-{{ pulumi_arch }}.tar.gz -C /usr/local/bin --strip-components=1
       args:
         creates: /usr/local/bin/pulumi
       when: (pulumi_installed is failed or pulumi_installed.stdout is not search(pulumi_version)) and ansible_facts["system"] == "Darwin"
@@ -846,7 +851,7 @@
       when: ansible_facts["system"] == "Darwin"
 
     - name: Download Jetbrains mono (Linux)
-      when: jetbrains_mono_exists is failed and ansible_facts["system"] != "Darwin"
+      when: ansible_facts["system"] != "Darwin" and (jetbrains_mono_exists is not defined or jetbrains_mono_exists.rc != 0)
       ansible.builtin.unarchive:
         src: https://github.com/ryanoasis/nerd-fonts/releases/download/v3.1.1/JetBrainsMono.zip
         dest: "~{{ remote_regular_user }}/.fonts/"
@@ -855,7 +860,7 @@
         owner: "{{ remote_regular_user }}"
 
     - name: Download Jetbrains mono (macOS)
-      when: jetbrains_mono_exists_mac is failed and ansible_facts["system"] == "Darwin"
+      when: ansible_facts["system"] == "Darwin" and (jetbrains_mono_exists_mac is not defined or jetbrains_mono_exists_mac.rc != 0)
       ansible.builtin.unarchive:
         src: https://github.com/ryanoasis/nerd-fonts/releases/download/v3.1.1/JetBrainsMono.zip
         dest: "~{{ remote_regular_user }}/Library/Fonts/"
