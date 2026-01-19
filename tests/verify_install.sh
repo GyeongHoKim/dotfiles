@@ -7,12 +7,25 @@ set -e
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 FAILED=0
 PASSED=0
-SKIPPED=0
+
+# Detect OS
+OS="$(uname -s)"
+if [[ "$OS" == "Linux" ]]; then
+    if [[ -f /etc/os-release ]]; then
+        . /etc/os-release
+        DISTRO="$ID"
+    else
+        DISTRO="unknown"
+    fi
+elif [[ "$OS" == "Darwin" ]]; then
+    DISTRO="macos"
+else
+    DISTRO="unknown"
+fi
 
 # Check if running inside a container
 is_container() {
@@ -29,19 +42,6 @@ check_command() {
     else
         echo -e "${RED}[FAIL]${NC} $description ($cmd)"
         ((FAILED++)) || true
-    fi
-}
-
-check_command_optional() {
-    local cmd=$1
-    local description=$2
-
-    if command -v "$cmd" &> /dev/null; then
-        echo -e "${GREEN}[PASS]${NC} $description ($cmd)"
-        ((PASSED++)) || true
-    else
-        echo -e "${YELLOW}[SKIP]${NC} $description ($cmd) - optional"
-        ((SKIPPED++)) || true
     fi
 }
 
@@ -123,8 +123,8 @@ check_flatpak() {
     local description=$2
 
     if ! command -v flatpak &> /dev/null; then
-        echo -e "${YELLOW}[SKIP]${NC} $description - flatpak not available"
-        ((SKIPPED++)) || true
+        echo -e "${RED}[FAIL]${NC} $description - flatpak not available"
+        ((FAILED++)) || true
         return
     fi
 
@@ -142,8 +142,8 @@ check_mise_tool() {
     local description=$2
 
     if ! command -v mise &> /dev/null; then
-        echo -e "${YELLOW}[SKIP]${NC} $description - mise not available"
-        ((SKIPPED++)) || true
+        echo -e "${RED}[FAIL]${NC} $description - mise not available"
+        ((FAILED++)) || true
         return
     fi
 
@@ -167,13 +167,31 @@ check_mise_tool() {
     fi
 }
 
+# Check Homebrew cask app (macOS)
+check_cask_app() {
+    local app_name=$1
+    local description=$2
+
+    if [[ -d "/Applications/$app_name.app" ]] || [[ -d "$HOME/Applications/$app_name.app" ]]; then
+        echo -e "${GREEN}[PASS]${NC} $description ($app_name)"
+        ((PASSED++)) || true
+    else
+        echo -e "${RED}[FAIL]${NC} $description ($app_name)"
+        ((FAILED++)) || true
+    fi
+}
+
 echo "============================================"
 echo "Dotfiles Installation Verification"
 echo "============================================"
+echo "OS: $OS | Distro: $DISTRO"
+if is_container; then
+    echo "Environment: Container (GUI apps not tested)"
+fi
 echo ""
 
-# ===== CORE TOOLS =====
-echo "--- Package Manager Tools ---"
+# ===== CORE TOOLS (All platforms) =====
+echo "--- Core Tools ---"
 check_command_with_paths "chezmoi" "Chezmoi" "$HOME/bin/chezmoi" "$HOME/.local/bin/chezmoi" "/usr/local/bin/chezmoi"
 check_command "mise" "mise version manager"
 check_command "git" "Git"
@@ -190,7 +208,6 @@ echo ""
 echo "--- Editors ---"
 check_command "nvim" "Neovim"
 check_dir "$HOME/.config/nvim" "Neovim config directory"
-check_command_optional "code" "VS Code"
 
 echo ""
 echo "--- CLI Development Tools ---"
@@ -199,7 +216,7 @@ check_command "fzf" "FZF"
 check_command_alternatives "fd fdfind" "fd-find"
 check_command "lazygit" "Lazygit"
 check_command_alternatives "task go-task" "Task (go-task)"
-check_command_with_path "poetry" "$HOME/.local/bin/poetry" "Poetry (Python package manager)"
+check_command_with_path "poetry" "$HOME/.local/bin/poetry" "Poetry"
 check_command "luarocks" "LuaRocks"
 
 echo ""
@@ -216,32 +233,33 @@ check_mise_tool "python" "Python"
 check_mise_tool "go" "Go"
 check_mise_tool "rust" "Rust"
 
-# ===== INFRASTRUCTURE =====
+# ===== INFRASTRUCTURE (All platforms) =====
 echo ""
-echo "--- Container & Infrastructure ---"
-check_command_optional "docker" "Docker"
+echo "--- Infrastructure Tools ---"
 check_command "kubectl" "kubectl"
 check_command "helm" "Helm"
 check_command "terraform" "Terraform"
-check_command_optional "pulumi" "Pulumi"
+check_command "pulumi" "Pulumi"
 
-
-# ===== BROWSERS & SYSTEM =====
+# ===== OS-SPECIFIC TOOLS =====
 echo ""
-echo "--- Browsers & System ---"
+echo "--- OS-Specific Tools ---"
 
-check_command_optional "brave-browser" "Brave Browser"
-check_command_optional "gnome-tweaks" "GNOME Tweaks"
-check_command_optional "blender" "Blender"
+if [[ "$OS" == "Linux" ]]; then
+    # Linux-only CLI tools
+    check_command "gnome-tweaks" "GNOME Tweaks"
+    check_command_alternatives "inotifywait inotify-wait" "inotify-tools"
+    check_command "flatpak" "Flatpak"
+    check_command "docker" "Docker"
 
-# ===== FLATPAK APPS (Linux only, skip in containers) =====
-if [[ "$(uname -s)" == "Linux" ]] && command -v flatpak &> /dev/null; then
-    if is_container; then
+    # GUI apps and flatpak apps require display server, not testable in containers
+    if ! is_container; then
         echo ""
-        echo "--- Flatpak Applications (skipped in container) ---"
-        echo -e "${YELLOW}[SKIP]${NC} Flatpak apps - not supported in container environment"
-        ((SKIPPED++)) || true
-    else
+        echo "--- GUI Applications (Native) ---"
+        check_command "brave-browser" "Brave Browser"
+        check_command "code" "VS Code"
+        check_command "blender" "Blender"
+
         echo ""
         echo "--- Flatpak Applications ---"
         check_flatpak "com.obsproject.Studio" "OBS Studio"
@@ -254,12 +272,29 @@ if [[ "$(uname -s)" == "Linux" ]] && command -v flatpak &> /dev/null; then
         check_flatpak "org.gnome.meld" "Meld"
         check_flatpak "org.sqlitebrowser.sqlitebrowser" "DB Browser for SQLite"
     fi
+
+elif [[ "$OS" == "Darwin" ]]; then
+    check_command "fswatch" "fswatch"
+
+    # macOS Cask apps
+    echo ""
+    echo "--- GUI Applications (Homebrew Cask) ---"
+    check_cask_app "Brave Browser" "Brave Browser"
+    check_cask_app "Visual Studio Code" "VS Code"
+    check_cask_app "Blender" "Blender"
+    check_cask_app "OBS" "OBS Studio"
+    check_cask_app "VLC" "VLC Media Player"
+    check_cask_app "Obsidian" "Obsidian"
+    check_cask_app "GIMP" "GIMP"
+    check_cask_app "Insomnia" "Insomnia"
+    check_cask_app "Meld" "Meld"
+    check_cask_app "DB Browser for SQLite" "DB Browser for SQLite"
 fi
 
 # ===== FONTS =====
 echo ""
 echo "--- Fonts ---"
-if [[ "$(uname -s)" == "Darwin" ]]; then
+if [[ "$OS" == "Darwin" ]]; then
     FONT_DIR="$HOME/Library/Fonts"
 else
     FONT_DIR="$HOME/.fonts"
@@ -280,13 +315,12 @@ echo "Results Summary"
 echo "============================================"
 echo -e "  ${GREEN}Passed${NC}:  $PASSED"
 echo -e "  ${RED}Failed${NC}:  $FAILED"
-echo -e "  ${YELLOW}Skipped${NC}: $SKIPPED"
 echo "============================================"
 
 if [[ $FAILED -gt 0 ]]; then
     echo -e "${RED}Some checks failed!${NC}"
     exit 1
 else
-    echo -e "${GREEN}All required checks passed!${NC}"
+    echo -e "${GREEN}All checks passed!${NC}"
     exit 0
 fi

@@ -278,26 +278,17 @@
             state: absent
           when: ansible_facts["system"] == "Darwin"
 
-        - name: Wait for Docker daemon to start (macOS)
-          ansible.builtin.wait_for:
-            path: "/var/run/docker.sock"
-            state: present
-            timeout: 120
-          become: true
-          when: ansible_facts["system"] == "Darwin"
-
-        - name: Verify Docker installation (macOS)
+        - name: Verify Docker CLI installation (macOS)
           ansible.builtin.command: docker --version
           register: docker_version_check
           changed_when: false
-          retries: 10
-          delay: 5
-          until: docker_version_check.rc == 0
           when: ansible_facts["system"] == "Darwin"
 
-        - name: Display Docker Desktop version (macOS)
+        - name: Display Docker Desktop installation message (macOS)
           ansible.builtin.debug:
-            msg: "Docker Desktop installed: {{ docker_version_check.stdout }}"
+            msg:
+              - "Docker Desktop installed: {{ docker_version_check.stdout }}"
+              - "Please launch Docker Desktop app to start the Docker daemon."
           when: ansible_facts["system"] == "Darwin"
 
 

@@ -12,31 +12,28 @@ sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply $GITHUB_USERNAME
 Windows11:
 
 ```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
 $env:GITHUB_USERNAME = "GyeongHoKim"
 & ([scriptblock]::Create((irm 'https://get.chezmoi.io/ps1'))) init --apply $env:GITHUB_USERNAME
 ```
 
 ## What gets installed
 
-### Development Environment
+### All Platforms (Linux + macOS)
 
 **Shell & Terminal:**
 
-- zsh with [Oh My Zsh](https://ohmyz.sh/) (Linux/macOS)
-- PowerShell with custom profile (Windows)
-- tmux for terminal multiplexing (Linux/macOS)
-- Windows Terminal (Windows)
+- zsh with [Oh My Zsh](https://ohmyz.sh/)
+- tmux for terminal multiplexing
 - JetBrains Mono Nerd Font
 
 **Editors:**
 
 - Neovim (configured with LazyVim)
-- Visual Studio Code
-- Helix
 
 **Language Runtimes** (via [mise](https://mise.jdx.dev)):
 
-- Node.js (LTS - always latest Long-term Support version)
+- Node.js (LTS)
 - Python (latest stable)
 - Go (latest stable)
 - Rust (latest stable)
@@ -50,45 +47,75 @@ $env:GITHUB_USERNAME = "GyeongHoKim"
 - Build tools: gcc, make, autoconf
 - Package managers: poetry (Python), luarocks (Lua)
 - Task runner: go-task
+- lazygit
 
-**Container & Infrastructure:**
+**Infrastructure Tools:**
 
-- Docker Desktop (macOS/Windows) / Docker (Linux)
-- Podman (Linux)
-- Kubernetes: kubectl, helm
-- Infrastructure as Code: terraform, pulumi
-- Cloud CLIs: flyctl (Fly.io), doctl (DigitalOcean)
+- kubectl, helm
+- terraform, pulumi
 
-### GUI Applications
-
-**Development:**
-
-- Visual Studio Code
-- Insomnia (API testing)
-- Meld (diff/merge tool)
-- DB Browser for SQLite
-
-**Browsers:**
-
-- Firefox / Firefox ESR
-- Brave Browser
-
-**Media & Graphics:**
-
-- OBS Studio (streaming/recording)
-- VLC Media Player
-- Blender (3D graphics)
-- Tenacity (audio editor)
-- GIMP (image editor)
-
-**Productivity:**
-
-- Obsidian (note-taking)
-- Foliate (ebook reader, Linux only)
+### Linux Only (Fedora + Debian/Ubuntu)
 
 **System:**
 
-- GNOME Tweaks (Linux only)
+- Docker (docker-ce)
+- GNOME Tweaks
+- inotify-tools
+- flatpak
+- podman-compose
+
+**GUI Applications (via Flatpak):**
+
+- OBS Studio
+- VLC Media Player
+- Tenacity (audio editor)
+- Obsidian (note-taking)
+- GIMP (image editor)
+- Insomnia (API testing)
+- Foliate (ebook reader)
+- Meld (diff/merge tool)
+- DB Browser for SQLite
+
+**Native Packages:**
+
+- Visual Studio Code
+- Brave Browser
+- Blender (3D graphics)
+
+### macOS Only
+
+**System:**
+
+- Docker Desktop
+- fswatch (file watcher)
+
+**GUI Applications (via Homebrew Cask):**
+
+- Visual Studio Code
+- Brave Browser
+- Blender
+- OBS Studio
+- VLC Media Player
+- Obsidian
+- GIMP
+- Insomnia
+- Meld
+- DB Browser for SQLite
+
+### Windows 11
+
+**Shell:**
+
+- PowerShell with custom profile
+- Windows Terminal
+
+**Applications (via winget):**
+
+- Docker Desktop
+- Visual Studio Code
+- Neovim
+
+See **[WINDOWS.md](WINDOWS.md)** for detailed Windows setup instructions.
 
 ## How to run
 
@@ -104,12 +131,9 @@ The setup will:
 1. Install Ansible
 2. Run the Ansible playbook to install system packages and mise
 3. Install Oh My Zsh
-
-5. Configure mise to auto-install language runtimes on first shell login
+4. Configure mise to auto-install language runtimes on first shell login
 
 ### Windows 11
-
-See **[WINDOWS.md](WINDOWS.md)** for detailed Windows setup instructions.
 
 ```powershell
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
