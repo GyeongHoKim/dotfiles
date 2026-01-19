@@ -2,6 +2,7 @@ README.md
 WINDOWS.md
 tests/
 .github/
+.config/nvim/lazy-lock.json
 
 # Platform-specific ignores
 {{- if eq .chezmoi.os "windows" }}
