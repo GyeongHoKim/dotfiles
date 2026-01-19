@@ -63,13 +63,11 @@ $packages = @{
     # Container Tools
     "Docker.DockerDesktop" = "Docker Desktop"
 
-    # Infrastructure & Cloud Tools
+    # Infrastructure Tools
     "Kubernetes.kubectl" = "kubectl"
     "Hashicorp.Terraform" = "Terraform"
     "Pulumi.Pulumi" = "Pulumi"
     "Helm.Helm" = "Helm"
-    "Flyio.flyctl" = "flyctl"
-    "DigitalOcean.doctl" = "doctl"
 
     # Build Tools
     "GoTask.Task" = "Task"
@@ -84,7 +82,6 @@ $packages = @{
     "JesseDuffield.lazygit" = "lazygit"
 
     # GUI Applications
-    "Mozilla.Firefox" = "Firefox"
     "Brave.Brave" = "Brave Browser"
     "Obsidian.Obsidian" = "Obsidian"
     "GIMP.GIMP" = "GIMP"
@@ -133,9 +130,9 @@ Write-Host "========================================" -ForegroundColor Green
 Write-Host ""
 Write-Host "Next steps:" -ForegroundColor Yellow
 Write-Host "1. Restart your terminal to load new PATH entries" -ForegroundColor White
-Write-Host "2. Run 'mise doctor' to verify mise installation" -ForegroundColor White
-Write-Host "3. Run 'mise install' to install language runtimes (Node, Python, Go, Rust)" -ForegroundColor White
-Write-Host "4. Poetry should be installed and available" -ForegroundColor White
+Write-Host "2. Launch Docker Desktop to start the Docker daemon" -ForegroundColor White
+Write-Host "3. Run 'mise doctor' to verify mise installation" -ForegroundColor White
+Write-Host "4. Run 'mise install' to install language runtimes (Node, Python, Go, Rust)" -ForegroundColor White
 
 Write-Host ""
 {{- end }}

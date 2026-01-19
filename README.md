@@ -104,16 +104,33 @@ $env:GITHUB_USERNAME = "GyeongHoKim"
 
 ### Windows 11
 
-**Shell:**
+**Shell & Terminal:**
 
-- PowerShell with custom profile
+- PowerShell 7+ with custom profile
 - Windows Terminal
 
-**Applications (via winget):**
+**Editors:**
+
+- Neovim
+- Visual Studio Code
+- Vim, Helix
+
+**CLI Tools (via winget):**
+
+- Git, GitHub CLI
+- ripgrep, fzf, fd, lazygit, zoxide
+- Task (go-task)
+
+**Infrastructure Tools:**
 
 - Docker Desktop
-- Visual Studio Code
-- Neovim
+- kubectl, helm
+- terraform, pulumi
+
+**GUI Applications:**
+
+- Brave Browser
+- Obsidian, GIMP, VLC, OBS Studio, Insomnia
 
 See **[WINDOWS.md](WINDOWS.md)** for detailed Windows setup instructions.
 
