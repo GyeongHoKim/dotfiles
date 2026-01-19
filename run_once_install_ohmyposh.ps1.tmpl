@@ -15,7 +15,8 @@ if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
 
 if (Get-Command oh-my-posh -ErrorAction SilentlyContinue) {
     Write-Host "Oh My Posh is already installed." -ForegroundColor Green
-} else {
+}
+else {
     Write-Host "Oh My Posh is not installed. Installing..." -ForegroundColor Yellow
     Write-Host "Installing Oh My Posh via winget..." -ForegroundColor Cyan
     try {
