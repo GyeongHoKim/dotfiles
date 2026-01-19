@@ -14,9 +14,13 @@ if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
 }
 
 # Check if oh-my-posh is already installed
+$isOhMyPoshInstalled = $false
 if (Get-Command oh-my-posh -ErrorAction SilentlyContinue) {
+    $isOhMyPoshInstalled = $true
     Write-Host "Oh My Posh is already installed." -ForegroundColor Green
-} else {
+}
+
+if (-not $isOhMyPoshInstalled) {
     Write-Host "Oh My Posh is not installed. Installing..." -ForegroundColor Yellow
     Write-Host "Installing Oh My Posh via winget..." -ForegroundColor Cyan
     try {
@@ -78,10 +82,13 @@ if (-not (Test-Path $profilePath)) {
 $profileContent = Get-Content $profilePath -Raw -ErrorAction SilentlyContinue
 
 # Check if oh-my-posh is already configured
+$isConfigured = $false
 if ($profileContent -match "oh-my-posh init") {
+    $isConfigured = $true
     Write-Host "  ✓ Oh My Posh is already configured in PowerShell profile" -ForegroundColor Green
 }
-else {
+
+if (-not $isConfigured) {
     # Add oh-my-posh initialization
     Write-Host "  Adding Oh My Posh initialization to profile..." -ForegroundColor Yellow
 
