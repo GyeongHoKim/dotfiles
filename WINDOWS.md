@@ -222,9 +222,15 @@ chezmoi apply
 
 ## Neovim Setup
 
-The Neovim configuration is shared with Linux/macOS and should work identically on Windows.
+The Neovim configuration is shared with Linux/macOS but uses a different path on Windows.
 
+### Windows-Specific Path
 
+According to [LazyVim's official documentation](https://www.lazyvim.org/installation), Windows uses:
+- **Windows**: `$env:LOCALAPPDATA\nvim` (typically `C:\Users\<username>\AppData\Local\nvim`)
+- **Linux/macOS**: `~/.config/nvim`
+
+The setup script automatically moves the configuration from `~/.config/nvim` to `$env:LOCALAPPDATA\nvim` during installation to ensure proper functionality on Windows.
 
 ### First Launch
 

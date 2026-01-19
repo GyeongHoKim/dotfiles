@@ -1,0 +1,62 @@
+{{- if eq .chezmoi.os "windows" }}
+# Windows Neovim Configuration Setup
+# This script moves the nvim config to the correct Windows location
+# According to LazyVim documentation: https://www.lazyvim.org/installation
+
+$ErrorActionPreference = "Stop"
+
+Write-Host "Setting up Neovim configuration for Windows..." -ForegroundColor Green
+
+# Define paths
+$sourceConfigPath = "$env:USERPROFILE\.config\nvim"
+$targetConfigPath = "$env:LOCALAPPDATA\nvim"
+
+# Check if source path exists
+if (-not (Test-Path $sourceConfigPath)) {
+    Write-Host "  ! Source nvim config not found at $sourceConfigPath" -ForegroundColor Yellow
+    Write-Host "  Skipping nvim setup" -ForegroundColor Yellow
+    exit 0
+}
+
+# Backup existing config if it exists at target location
+if (Test-Path $targetConfigPath) {
+    $backupPath = "$env:LOCALAPPDATA\nvim.bak.$(Get-Date -Format 'yyyyMMdd_HHmmss')"
+    Write-Host "  Backing up existing nvim config to $backupPath" -ForegroundColor Cyan
+    Move-Item -Path $targetConfigPath -Destination $backupPath -Force
+}
+
+# Ensure target directory parent exists
+$targetParent = Split-Path -Parent $targetConfigPath
+if (-not (Test-Path $targetParent)) {
+    New-Item -ItemType Directory -Path $targetParent -Force | Out-Null
+}
+
+# Move config to correct Windows location
+Write-Host "  Moving nvim config from $sourceConfigPath to $targetConfigPath" -ForegroundColor Cyan
+try {
+    Move-Item -Path $sourceConfigPath -Destination $targetConfigPath -Force
+    Write-Host "  ✓ Neovim configuration moved successfully" -ForegroundColor Green
+    Write-Host "  Location: $targetConfigPath" -ForegroundColor White
+}
+catch {
+    Write-Host "  ✗ Failed to move nvim config" -ForegroundColor Red
+    Write-Host "    Error: $_" -ForegroundColor Red
+    exit 1
+}
+
+# Clean up empty .config directory if it exists and is empty
+$configDir = "$env:USERPROFILE\.config"
+if (Test-Path $configDir) {
+    $items = Get-ChildItem -Path $configDir -Force
+    if ($items.Count -eq 0) {
+        Write-Host "  Removing empty .config directory" -ForegroundColor Cyan
+        Remove-Item -Path $configDir -Force
+    }
+}
+
+Write-Host ""
+Write-Host "Neovim setup complete!" -ForegroundColor Green
+Write-Host "Run 'nvim' to start and LazyVim will install plugins automatically." -ForegroundColor White
+Write-Host ""
+
+{{- end }}
