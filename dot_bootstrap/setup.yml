@@ -203,6 +203,7 @@
               - mise
               - kubectl
               - terraform
+              - mole
             state: present
 
         - name: Install GUI applications via Homebrew Cask (macOS)
@@ -260,8 +261,8 @@
         - name: Install Docker Desktop (macOS)
           ansible.builtin.command: /Volumes/Docker/Docker.app/Contents/MacOS/install --accept-license
           become: true
-          async: 600 # Docker Desktop installation can take time, especially first run
-          poll: 10
+          async: 7200 # Docker Desktop installation can take over an hour
+          poll: 30
           when: 
             - ansible_facts["system"] == "Darwin"
             - lookup('env', 'GITHUB_ACTIONS') != 'true'
@@ -292,20 +293,21 @@
             - ansible_facts["system"] == "Darwin"
             - lookup('env', 'GITHUB_ACTIONS') != 'true'
 
-        - name: Verify Docker CLI installation (macOS)
+        - name: Check if Docker CLI is available (macOS)
           ansible.builtin.command: docker --version
           register: docker_version_check
           changed_when: false
-          when: 
+          failed_when: false  # CLI symlinks are created when Docker Desktop is launched for the first time
+          when:
             - ansible_facts["system"] == "Darwin"
             - lookup('env', 'GITHUB_ACTIONS') != 'true'
 
         - name: Display Docker Desktop installation message (macOS)
           ansible.builtin.debug:
             msg:
-              - "Docker Desktop installed: {{ docker_version_check.stdout | default('N/A') }}"
-              - "Please launch Docker Desktop app to start the Docker daemon."
-          when: 
+              - "Docker Desktop installed. CLI available: {{ docker_version_check.stdout | default('Not yet - launch Docker Desktop first') }}"
+              - "Please launch Docker Desktop app to create CLI symlinks and start the Docker daemon."
+          when:
             - ansible_facts["system"] == "Darwin"
             - lookup('env', 'GITHUB_ACTIONS') != 'true'
 
@@ -413,14 +415,6 @@
         state: absent
       become: false
       when: not neovim_chezmoi_managed.stat.exists
-      tags:
-        - lazyvim
-
-    - name: Remove old Helix config directory
-      ansible.builtin.file:
-        path: "~{{ remote_regular_user }}/.config/helix"
-        state: absent
-      become: false
       tags:
         - lazyvim
 
@@ -885,3 +879,10 @@
         remote_src: true
         mode: "0755"
         owner: "{{ remote_regular_user }}"
+
+    - name: Install Claude Code (Linux/macOS)
+      ansible.builtin.shell: curl -fsSL https://claude.ai/install.sh | bash
+      become: false
+      become_user: "{{ remote_regular_user }}"
+      args:
+        creates: "~{{ remote_regular_user }}/.claude/local/claude"

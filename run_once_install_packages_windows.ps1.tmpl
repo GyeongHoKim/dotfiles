@@ -78,7 +78,6 @@ $packages = @{
     "sharkdp.fd" = "fd"
     "tmux.tmux" = "tmux"
     "ajeetdsouza.zoxide" = "zoxide"
-    "Helix.Helix" = "Helix"
     "JesseDuffield.lazygit" = "lazygit"
 
     # GUI Applications
@@ -122,7 +121,16 @@ if ($pythonAvailable) {
     Write-Host "  ! Python not found, skipping Poetry installation" -ForegroundColor Yellow
 }
 
-
+# Install Claude Code
+Write-Host "`nInstalling Claude Code..." -ForegroundColor Cyan
+try {
+    irm https://claude.ai/install.ps1 | iex
+    Write-Host "  ✓ Claude Code installed successfully" -ForegroundColor Green
+}
+catch {
+    Write-Host "  ✗ Failed to install Claude Code" -ForegroundColor Red
+    Write-Host "    Error: $_" -ForegroundColor Red
+}
 
 Write-Host "`n========================================" -ForegroundColor Green
 Write-Host "Package installation complete!" -ForegroundColor Green
