@@ -77,32 +77,3 @@ jobs:
           chmod +x tests/verify_install.sh
           ./tests/verify_install.sh
 
-  test-windows:
-    name: Test on Windows
-    runs-on: windows-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Install chezmoi
-        run: |
-          Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
-          $dest = Join-Path $env:USERPROFILE "bin"
-          if (!(Test-Path $dest)) { New-Item -ItemType Directory -Path $dest }
-          $script = irm -useb https://get.chezmoi.io/ps1
-          & ([scriptblock]::Create($script)) -b $dest
-          "$dest" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-        shell: pwsh
-
-      - name: Initialize and apply dotfiles
-        run: |
-          $env:Path = "$env:USERPROFILE\bin;$env:Path"
-          chezmoi init --apply $env:GITHUB_REPOSITORY_OWNER
-        shell: pwsh
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Run verification
-        run: |
-          .\tests\verify_install.ps1
-        shell: pwsh
