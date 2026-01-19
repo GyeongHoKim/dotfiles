@@ -26,7 +26,8 @@ if (-not (Test-WingetAvailable)) {
 
 # Check if oh-my-posh is already installed
 $ohMyPoshInstalled = $false
-if (Get-Command oh-my-posh -ErrorAction SilentlyContinue) {
+$existingCommand = Get-Command oh-my-posh -ErrorAction SilentlyContinue
+if ($existingCommand) {
     $ohMyPoshInstalled = $true
     Write-Host "Oh My Posh is already installed." -ForegroundColor Green
 }
