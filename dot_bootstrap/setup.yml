@@ -220,6 +220,87 @@
               - db-browser-for-sqlite
             state: present
 
+        # Docker Desktop Installation for macOS (following official guidelines)
+        - name: Set architecture-specific Docker Desktop URL (macOS)
+          ansible.builtin.set_fact:
+            docker_desktop_url: >-
+              {{ 'https://desktop.docker.com/mac/main/arm64/Docker.dmg'
+                 if ansible_architecture == 'arm64'
+                 else 'https://desktop.docker.com/mac/main/amd64/Docker.dmg' }}
+          when: ansible_facts["system"] == "Darwin"
+
+        - name: Create temporary directory for Docker Desktop download (macOS)
+          ansible.builtin.file:
+            path: /tmp/docker_install
+            state: directory
+            mode: '0755'
+          when: ansible_facts["system"] == "Darwin"
+
+        - name: Download Docker Desktop DMG (macOS)
+          ansible.builtin.get_url:
+            url: "{{ docker_desktop_url }}"
+            dest: "/tmp/docker_install/Docker.dmg"
+            mode: "0644"
+          when: ansible_facts["system"] == "Darwin"
+
+        - name: Mount Docker Desktop DMG (macOS)
+          ansible.builtin.command: hdiutil attach "/tmp/docker_install/Docker.dmg"
+          register: docker_dmg_mount
+          changed_when: false
+          when: ansible_facts["system"] == "Darwin"
+
+        - name: Install Docker Desktop (macOS)
+          ansible.builtin.command: /Volumes/Docker/Docker.app/Contents/MacOS/install --accept-license
+          become: true
+          async: 600 # Docker Desktop installation can take time, especially first run
+          poll: 10
+          when: ansible_facts["system"] == "Darwin"
+
+        - name: Install Rosetta 2 on Apple Silicon (macOS)
+          ansible.builtin.command: softwareupdate --install-rosetta --agree-to-license
+          become: true
+          changed_when: false
+          failed_when: false # Ignore if already installed or not Apple Silicon
+          when:
+            - ansible_facts["system"] == "Darwin"
+            - ansible_architecture == 'arm64'
+
+        - name: Unmount Docker Desktop DMG (macOS)
+          ansible.builtin.command: hdiutil detach /Volumes/Docker
+          when:
+            - ansible_facts["system"] == "Darwin"
+            - docker_dmg_mount.rc == 0
+          failed_when: false
+
+        - name: Cleanup temporary Docker Desktop download directory (macOS)
+          ansible.builtin.file:
+            path: /tmp/docker_install
+            state: absent
+          when: ansible_facts["system"] == "Darwin"
+
+        - name: Wait for Docker daemon to start (macOS)
+          ansible.builtin.wait_for:
+            path: "/var/run/docker.sock"
+            state: present
+            timeout: 120
+          become: true
+          when: ansible_facts["system"] == "Darwin"
+
+        - name: Verify Docker installation (macOS)
+          ansible.builtin.command: docker --version
+          register: docker_version_check
+          changed_when: false
+          retries: 10
+          delay: 5
+          until: docker_version_check.rc == 0
+          when: ansible_facts["system"] == "Darwin"
+
+        - name: Display Docker Desktop version (macOS)
+          ansible.builtin.debug:
+            msg: "Docker Desktop installed: {{ docker_version_check.stdout }}"
+          when: ansible_facts["system"] == "Darwin"
+
+
     - name: Change shell to zsh (Linux)
       ansible.builtin.user:
         name: "{{ remote_regular_user }}"
