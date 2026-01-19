@@ -224,13 +224,12 @@ check_command "kubectl" "kubectl"
 check_command "helm" "Helm"
 check_command "terraform" "Terraform"
 check_command_optional "pulumi" "Pulumi"
-check_command_optional "flyctl" "Fly.io CLI"
-check_command_optional "doctl" "DigitalOcean CLI"
+
 
 # ===== BROWSERS & SYSTEM =====
 echo ""
 echo "--- Browsers & System ---"
-check_command_optional "firefox" "Firefox"
+
 check_command_optional "brave-browser" "Brave Browser"
 check_command_optional "gnome-tweaks" "GNOME Tweaks"
 check_command_optional "blender" "Blender"

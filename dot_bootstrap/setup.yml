@@ -31,7 +31,6 @@
           - git
           - htop
           - neovim
-          - firefox
           - gh
           - gnome-tweaks
           - gcc
@@ -49,7 +48,6 @@
           - autoconf
           - fd-find
           - gcc-c++
-          - doctl
           - lazygit
           - inotify-tools
           - blender
@@ -160,17 +158,7 @@
         state: link
       when: ansible_os_family == "Debian"
 
-    - name: Install Firefox (Ubuntu)
-      ansible.builtin.apt:
-        name: firefox
-        state: present
-      when: ansible_distribution == "Ubuntu"
 
-    - name: Install Firefox ESR (Debian)
-      ansible.builtin.apt:
-        name: firefox-esr
-        state: present
-      when: ansible_distribution == "Debian"
 
 
     - name: Homebrew operations (macOS)
@@ -187,7 +175,6 @@
               - git
               - htop
               - neovim
-              - firefox
               - gh
               - gcc
               - helm
@@ -744,39 +731,7 @@
         creates: /usr/local/bin/pulumi
       when: (pulumi_installed is failed or pulumi_installed.stdout is not search(pulumi_version)) and ansible_facts["system"] == "Darwin"
 
-    - name: Check if the targeted version of flyctl is installed
-      ansible.builtin.command: flyctl version
-      register: installed_flyctl_version
-      ignore_errors: true
-      changed_when: false
 
-    - name: Download flyctl tar.gz (Linux)
-      ansible.builtin.get_url:
-        url: "https://github.com/superfly/flyctl/releases/download/v{{ flyctl_version }}/flyctl_{{ flyctl_version }}_Linux_x86_64.tar.gz"
-        dest: "/tmp/flyctl_{{ flyctl_version }}_Linux_x86_64.tar.gz"
-        mode: "0644"
-      when: (installed_flyctl_version is failed or flyctl_version not in installed_flyctl_version.stdout) and ansible_facts["system"] != "Darwin"
-
-    - name: Extract flyctl to /usr/local/bin (Linux)
-      ansible.builtin.unarchive:
-        src: "/tmp/flyctl_{{ flyctl_version }}_Linux_x86_64.tar.gz"
-        dest: "/usr/local/bin"
-        remote_src: true
-      when: (installed_flyctl_version is failed or flyctl_version not in installed_flyctl_version.stdout) and ansible_facts["system"] != "Darwin"
-
-    - name: Download flyctl tar.gz (macOS)
-      ansible.builtin.get_url:
-        url: "https://github.com/superfly/flyctl/releases/download/v{{ flyctl_version }}/flyctl_{{ flyctl_version }}_macOS_x86_64.tar.gz"
-        dest: "/tmp/flyctl_{{ flyctl_version }}_macOS_x86_64.tar.gz"
-        mode: "0644"
-      when: (installed_flyctl_version is failed or flyctl_version not in installed_flyctl_version.stdout) and ansible_facts["system"] == "Darwin"
-
-    - name: Extract flyctl to /usr/local/bin (macOS)
-      ansible.builtin.command:
-        cmd: tar -xzf /tmp/flyctl_{{ flyctl_version }}_macOS_x86_64.tar.gz -C /usr/local/bin --strip-components=1
-      args:
-        creates: /usr/local/bin/flyctl
-      when: (installed_flyctl_version is failed or flyctl_version not in installed_flyctl_version.stdout) and ansible_facts["system"] == "Darwin"
 
     - name: Add Flathub repository (Linux)
       community.general.flatpak_remote:
