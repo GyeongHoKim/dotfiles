@@ -227,34 +227,44 @@
               {{ 'https://desktop.docker.com/mac/main/arm64/Docker.dmg'
                  if ansible_architecture == 'arm64'
                  else 'https://desktop.docker.com/mac/main/amd64/Docker.dmg' }}
-          when: ansible_facts["system"] == "Darwin"
+          when: 
+            - ansible_facts["system"] == "Darwin"
+            - lookup('env', 'GITHUB_ACTIONS') != 'true'
 
         - name: Create temporary directory for Docker Desktop download (macOS)
           ansible.builtin.file:
             path: /tmp/docker_install
             state: directory
             mode: '0755'
-          when: ansible_facts["system"] == "Darwin"
+          when: 
+            - ansible_facts["system"] == "Darwin"
+            - lookup('env', 'GITHUB_ACTIONS') != 'true'
 
         - name: Download Docker Desktop DMG (macOS)
           ansible.builtin.get_url:
             url: "{{ docker_desktop_url }}"
             dest: "/tmp/docker_install/Docker.dmg"
             mode: "0644"
-          when: ansible_facts["system"] == "Darwin"
+          when: 
+            - ansible_facts["system"] == "Darwin"
+            - lookup('env', 'GITHUB_ACTIONS') != 'true'
 
         - name: Mount Docker Desktop DMG (macOS)
           ansible.builtin.command: hdiutil attach "/tmp/docker_install/Docker.dmg"
           register: docker_dmg_mount
           changed_when: false
-          when: ansible_facts["system"] == "Darwin"
+          when: 
+            - ansible_facts["system"] == "Darwin"
+            - lookup('env', 'GITHUB_ACTIONS') != 'true'
 
         - name: Install Docker Desktop (macOS)
           ansible.builtin.command: /Volumes/Docker/Docker.app/Contents/MacOS/install --accept-license
           become: true
           async: 600 # Docker Desktop installation can take time, especially first run
           poll: 10
-          when: ansible_facts["system"] == "Darwin"
+          when: 
+            - ansible_facts["system"] == "Darwin"
+            - lookup('env', 'GITHUB_ACTIONS') != 'true'
 
         - name: Install Rosetta 2 on Apple Silicon (macOS)
           ansible.builtin.command: softwareupdate --install-rosetta --agree-to-license
@@ -264,32 +274,40 @@
           when:
             - ansible_facts["system"] == "Darwin"
             - ansible_architecture == 'arm64'
+            - lookup('env', 'GITHUB_ACTIONS') != 'true'
 
         - name: Unmount Docker Desktop DMG (macOS)
           ansible.builtin.command: hdiutil detach /Volumes/Docker
           when:
             - ansible_facts["system"] == "Darwin"
-            - docker_dmg_mount.rc == 0
+            - lookup('env', 'GITHUB_ACTIONS') != 'true'
+            - docker_dmg_mount.rc is defined and docker_dmg_mount.rc == 0
           failed_when: false
 
         - name: Cleanup temporary Docker Desktop download directory (macOS)
           ansible.builtin.file:
             path: /tmp/docker_install
             state: absent
-          when: ansible_facts["system"] == "Darwin"
+          when: 
+            - ansible_facts["system"] == "Darwin"
+            - lookup('env', 'GITHUB_ACTIONS') != 'true'
 
         - name: Verify Docker CLI installation (macOS)
           ansible.builtin.command: docker --version
           register: docker_version_check
           changed_when: false
-          when: ansible_facts["system"] == "Darwin"
+          when: 
+            - ansible_facts["system"] == "Darwin"
+            - lookup('env', 'GITHUB_ACTIONS') != 'true'
 
         - name: Display Docker Desktop installation message (macOS)
           ansible.builtin.debug:
             msg:
-              - "Docker Desktop installed: {{ docker_version_check.stdout }}"
+              - "Docker Desktop installed: {{ docker_version_check.stdout | default('N/A') }}"
               - "Please launch Docker Desktop app to start the Docker daemon."
-          when: ansible_facts["system"] == "Darwin"
+          when: 
+            - ansible_facts["system"] == "Darwin"
+            - lookup('env', 'GITHUB_ACTIONS') != 'true'
 
 
     - name: Change shell to zsh (Linux)
