@@ -1,5 +1,7 @@
 # dotfiles
 
+[![Linux & macOS](https://github.com/GyeongHoKim/dotfiles/actions/workflows/test-install.yml/badge.svg)](https://github.com/GyeongHoKim/dotfiles/actions/workflows/test-install.yml)
+
 This repo contains the configuration to setup my machines for web development. This is using [Chezmoi](https://chezmoi.io), the dotfile manager to setup the install.
 
 Supported platforms: **Fedora**, **Debian/Ubuntu**, **macOS**, and **Windows 11**
@@ -102,38 +104,6 @@ $env:GITHUB_USERNAME = "GyeongHoKim"
 - Meld
 - DB Browser for SQLite
 
-### Windows 11
-
-**Shell & Terminal:**
-
-- PowerShell 7+ with custom profile
-- Windows Terminal
-
-**Editors:**
-
-- Neovim
-- VSCodium
-- Vim, Helix
-
-**CLI Tools (via winget):**
-
-- Git, GitHub CLI
-- ripgrep, fzf, fd, lazygit, zoxide
-- Task (go-task)
-
-**Infrastructure Tools:**
-
-- Docker Desktop
-- kubectl, helm
-- terraform, pulumi
-
-**GUI Applications:**
-
-- Brave Browser
-- Obsidian, GIMP, VLC, OBS Studio, Insomnia
-
-See **[WINDOWS.md](WINDOWS.md)** for detailed Windows setup instructions.
-
 ## How to run
 
 ### Linux / macOS
@@ -157,15 +127,6 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
 $env:GITHUB_USERNAME = "GyeongHoKim"
 & ([scriptblock]::Create((irm 'https://get.chezmoi.io/ps1'))) init --apply $env:GITHUB_USERNAME
 ```
-
-The setup will:
-
-1. Install development tools via winget (Windows Package Manager)
-2. Set up PowerShell profile with mise activation
-3. Deploy Neovim configuration (cross-platform)
-4. Install mise for language version management
-
-**Important:** After installation, restart your terminal and run `mise install` to install language runtimes.
 
 ## Managing Language Versions
 
