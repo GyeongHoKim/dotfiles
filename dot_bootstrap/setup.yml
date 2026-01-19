@@ -209,7 +209,7 @@
           community.general.homebrew_cask:
             name:
               - blender
-              - visual-studio-code
+              - vscodium
               - brave-browser
               - obs
               - vlc
@@ -515,56 +515,42 @@
         update_cache: yes
       when: ansible_os_family == "Debian"
 
-    - name: Import Microsoft GPG Key (Fedora)
-      ansible.builtin.rpm_key:
-        key: https://packages.microsoft.com/keys/microsoft.asc
-        state: present
-      when: ansible_os_family == "RedHat"
-
-    - name: Add Visual Studio Code Repo (Fedora)
+    - name: Add VSCodium Repo (Fedora)
       ansible.builtin.yum_repository:
-        name: vscode
-        description: Visual Studio Code
-        baseurl: https://packages.microsoft.com/yumrepos/vscode
-        gpgkey: https://packages.microsoft.com/keys/microsoft.asc
+        name: vscodium
+        description: VSCodium Repo
+        baseurl: https://paulcarroty.gitlab.io/vscodium-deb-rpm-repo/rpms/
+        gpgkey: https://gitlab.com/paulcarroty/vscodium-deb-rpm-repo/raw/master/pub.gpg
         gpgcheck: true
+        repo_gpgcheck: true
         enabled: true
+        metadata_expire: 3600
       when: ansible_os_family == "RedHat"
 
-    - name: Install VS Code (Fedora)
+    - name: Install VSCodium (Fedora)
       ansible.builtin.dnf:
-        name: code
+        name: codium
         state: present
       when: ansible_os_family == "RedHat"
 
-    - name: Install prerequisites for VS Code (Debian/Ubuntu)
-      ansible.builtin.apt:
-        name:
-          - apt-transport-https
-          - ca-certificates
-          - curl
-          - gnupg
-        state: present
-        update_cache: yes
-      when: ansible_os_family == "Debian"
-
-    - name: Add Microsoft GPG key to keyring (Debian/Ubuntu)
-      ansible.builtin.shell: curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft.gpg
+    - name: Add VSCodium GPG key (Debian/Ubuntu)
+      ansible.builtin.shell: |
+        wget -qO - https://gitlab.com/paulcarroty/vscodium-deb-rpm-repo/raw/master/pub.gpg | gpg --dearmor | dd of=/usr/share/keyrings/vscodium-archive-keyring.gpg
       args:
-        creates: /usr/share/keyrings/microsoft.gpg
+        creates: /usr/share/keyrings/vscodium-archive-keyring.gpg
       when: ansible_os_family == "Debian"
 
-    - name: Add Visual Studio Code Repo (Debian/Ubuntu)
+    - name: Add VSCodium Repo (Debian/Ubuntu)
       ansible.builtin.apt_repository:
-        repo: "deb [signed-by=/usr/share/keyrings/microsoft.gpg arch=amd64,arm64,armhf] https://packages.microsoft.com/repos/code stable main"
+        repo: "deb [arch=amd64,arm64 signed-by=/usr/share/keyrings/vscodium-archive-keyring.gpg] https://download.vscodium.com/debs vscodium main"
         state: present
-        filename: vscode
+        filename: vscodium
         update_cache: yes
       when: ansible_os_family == "Debian"
 
-    - name: Install VS Code (Debian/Ubuntu)
+    - name: Install VSCodium (Debian/Ubuntu)
       ansible.builtin.apt:
-        name: code
+        name: codium
         state: present
         update_cache: yes
       when: ansible_os_family == "Debian"

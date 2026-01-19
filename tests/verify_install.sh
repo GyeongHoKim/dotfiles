@@ -257,7 +257,7 @@ if [[ "$OS" == "Linux" ]]; then
         echo ""
         echo "--- GUI Applications (Native) ---"
         check_command "brave-browser" "Brave Browser"
-        check_command "code" "VS Code"
+        check_command "codium" "VSCodium"
         check_command "blender" "Blender"
 
         echo ""
@@ -280,7 +280,7 @@ elif [[ "$OS" == "Darwin" ]]; then
     echo ""
     echo "--- GUI Applications (Homebrew Cask) ---"
     check_cask_app "Brave Browser" "Brave Browser"
-    check_cask_app "Visual Studio Code" "VS Code"
+    check_cask_app "VSCodium" "VSCodium"
     check_cask_app "Blender" "Blender"
     check_cask_app "OBS" "OBS Studio"
     check_cask_app "VLC" "VLC Media Player"

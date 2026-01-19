@@ -78,7 +78,7 @@ $env:GITHUB_USERNAME = "GyeongHoKim"
 
 **Native Packages:**
 
-- Visual Studio Code
+- VSCodium
 - Brave Browser
 - Blender (3D graphics)
 
@@ -91,7 +91,7 @@ $env:GITHUB_USERNAME = "GyeongHoKim"
 
 **GUI Applications (via Homebrew Cask):**
 
-- Visual Studio Code
+- VSCodium
 - Brave Browser
 - Blender
 - OBS Studio
@@ -112,7 +112,7 @@ $env:GITHUB_USERNAME = "GyeongHoKim"
 **Editors:**
 
 - Neovim
-- Visual Studio Code
+- VSCodium
 - Vim, Helix
 
 **CLI Tools (via winget):**

@@ -130,7 +130,7 @@ Test-Path-Exists "$env:USERPROFILE\Documents\PowerShell\Microsoft.PowerShell_pro
 Write-Host ""
 Write-Host "--- Editors ---"
 Test-Command "nvim" "Neovim"
-Test-Command "code" "VS Code"
+Test-Command "codium" "VSCodium"
 Test-Path-Exists "$env:LOCALAPPDATA\nvim" "Neovim config directory"
 
 Write-Host ""
