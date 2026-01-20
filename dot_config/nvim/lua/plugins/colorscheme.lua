@@ -1,10 +1,10 @@
 return {
   {
-    "barrett-ruth/midnight.nvim",
+    "rebelot/kanagawa.nvim",
     lazy = false,
     priority = 1000,
     config = function()
-      vim.cmd.colorscheme("midnight")
+      vim.cmd.colorscheme("kanagawa-wave")
     end,
   },
 }
