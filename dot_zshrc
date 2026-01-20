@@ -1,6 +1,15 @@
 # Load local env
 [ -f ~/.env.local ] && . ~/.env.local
 
+# Homebrew PATH (macOS)
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  if [[ -f "/opt/homebrew/bin/brew" ]]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+  elif [[ -f "/usr/local/bin/brew" ]]; then
+    eval "$(/usr/local/bin/brew shellenv)"
+  fi
+fi
+
 export ZSH="$HOME/.oh-my-zsh"
 ZSH_THEME="fino-time"
 plugins=(git z)
