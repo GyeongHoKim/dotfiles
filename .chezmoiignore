@@ -10,6 +10,7 @@ tests/
 run_once_install_ansible.sh
 run_once_install_ohmyzsh.sh
 run_once_rustup.sh
+run_once_after_install_mise_tools.sh.tmpl
 run_onchange_bootstrap.sh.tmpl
 run_onchange_reload_gnome-terminal-profiles.sh.tmpl
 .bootstrap/
@@ -17,9 +18,13 @@ run_onchange_reload_gnome-terminal-profiles.sh.tmpl
 .bashrc
 .profile
 .tmux.conf
+.config/
 {{- else }}
 # Ignore Windows files on Linux/macOS
 run_once_install_packages_windows.ps1
-run_onchange_windows_bootstrap.ps1.tmpl
+run_once_install_ohmyposh.ps1.tmpl
+run_onchange_after_setup_nvim_windows.ps1.tmpl
+run_onchange_bootstrap.ps1.tmpl
 Documents/PowerShell/
+AppData/
 {{- end }}
