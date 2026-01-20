@@ -639,7 +639,7 @@
 
     - name: Get latest lazygit version (Debian/Ubuntu)
       ansible.builtin.shell: |
-        curl -s "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep -Po '"tag_name": "v\K[^"]*'
+        curl -s "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep -o '"tag_name": "v[^"]*' | sed 's/.*"tag_name": "v\([^"]*\)".*/\1/'
       register: lazygit_version
       when: ansible_os_family == "Debian"
       changed_when: false
