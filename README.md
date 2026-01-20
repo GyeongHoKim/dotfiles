@@ -45,6 +45,7 @@ $env:GITHUB_USERNAME = "GyeongHoKim"
 **CLI Development Tools:**
 
 - Git + GitHub CLI (`gh`)
+- OpenCode (AI coding agent)
 - Search: `ripgrep`, `fzf`, `fd-find`
 - Build tools: gcc, make, autoconf
 - Package managers: poetry (Python), luarocks (Lua)

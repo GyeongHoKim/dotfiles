@@ -90,12 +90,11 @@
         state: present
       when: ansible_os_family == "RedHat"
 
-
     - name: Add Task repository (Debian/Ubuntu)
       ansible.builtin.get_url:
         url: https://dl.cloudsmith.io/public/task/task/setup.deb.sh
         dest: /tmp/setup-task-repo.sh
-        mode: '0755'
+        mode: "0755"
       when: ansible_os_family == "Debian"
 
     - name: Install Task repository (Debian/Ubuntu)
@@ -157,9 +156,6 @@
         dest: /usr/local/bin/fd
         state: link
       when: ansible_os_family == "Debian"
-
-
-
 
     - name: Homebrew operations (macOS)
       when: ansible_facts["system"] == "Darwin"
@@ -228,7 +224,7 @@
               {{ 'https://desktop.docker.com/mac/main/arm64/Docker.dmg'
                  if ansible_architecture == 'arm64'
                  else 'https://desktop.docker.com/mac/main/amd64/Docker.dmg' }}
-          when: 
+          when:
             - ansible_facts["system"] == "Darwin"
             - lookup('env', 'GITHUB_ACTIONS') != 'true'
 
@@ -236,8 +232,8 @@
           ansible.builtin.file:
             path: /tmp/docker_install
             state: directory
-            mode: '0755'
-          when: 
+            mode: "0755"
+          when:
             - ansible_facts["system"] == "Darwin"
             - lookup('env', 'GITHUB_ACTIONS') != 'true'
 
@@ -246,7 +242,7 @@
             url: "{{ docker_desktop_url }}"
             dest: "/tmp/docker_install/Docker.dmg"
             mode: "0644"
-          when: 
+          when:
             - ansible_facts["system"] == "Darwin"
             - lookup('env', 'GITHUB_ACTIONS') != 'true'
 
@@ -254,7 +250,7 @@
           ansible.builtin.command: hdiutil attach "/tmp/docker_install/Docker.dmg"
           register: docker_dmg_mount
           changed_when: false
-          when: 
+          when:
             - ansible_facts["system"] == "Darwin"
             - lookup('env', 'GITHUB_ACTIONS') != 'true'
 
@@ -263,7 +259,7 @@
           become: true
           async: 7200 # Docker Desktop installation can take over an hour
           poll: 30
-          when: 
+          when:
             - ansible_facts["system"] == "Darwin"
             - lookup('env', 'GITHUB_ACTIONS') != 'true'
 
@@ -289,7 +285,7 @@
           ansible.builtin.file:
             path: /tmp/docker_install
             state: absent
-          when: 
+          when:
             - ansible_facts["system"] == "Darwin"
             - lookup('env', 'GITHUB_ACTIONS') != 'true'
 
@@ -297,7 +293,7 @@
           ansible.builtin.command: docker --version
           register: docker_version_check
           changed_when: false
-          failed_when: false  # CLI symlinks are created when Docker Desktop is launched for the first time
+          failed_when: false # CLI symlinks are created when Docker Desktop is launched for the first time
           when:
             - ansible_facts["system"] == "Darwin"
             - lookup('env', 'GITHUB_ACTIONS') != 'true'
@@ -311,7 +307,6 @@
             - ansible_facts["system"] == "Darwin"
             - lookup('env', 'GITHUB_ACTIONS') != 'true'
 
-
     - name: Change shell to zsh (Linux)
       ansible.builtin.user:
         name: "{{ remote_regular_user }}"
@@ -323,7 +318,6 @@
         name: "{{ remote_regular_user }}"
         shell: /bin/zsh
       when: ansible_facts["system"] == "Darwin"
-
 
     - name: Add mise config manager (Fedora)
       ansible.builtin.yum_repository:
@@ -361,7 +355,6 @@
         state: present
         update_cache: yes
       when: ansible_os_family == "Debian"
-
 
     - name: Ensure .config directory exists for remote_regular_user
       ansible.builtin.file:
@@ -505,7 +498,7 @@
       ansible.builtin.get_url:
         url: https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg
         dest: /usr/share/keyrings/brave-browser-archive-keyring.gpg
-        mode: '0644'
+        mode: "0644"
       when: ansible_os_family == "Debian"
 
     - name: Set architecture fact for Debian
@@ -675,7 +668,7 @@
       ansible.builtin.file:
         path: /etc/apt/keyrings
         state: directory
-        mode: '0755'
+        mode: "0755"
       when: ansible_os_family == "Debian"
 
     - name: Add kubectl GPG key (Debian/Ubuntu)
@@ -806,8 +799,6 @@
         creates: /usr/local/bin/pulumi
       when: (pulumi_installed is failed or pulumi_installed.stdout is not search(pulumi_version)) and ansible_facts["system"] == "Darwin"
 
-
-
     - name: Add Flathub repository (Linux)
       community.general.flatpak_remote:
         name: flathub
@@ -892,3 +883,10 @@
       args:
         creates: /usr/bin/tailscale
       when: ansible_facts["system"] == "Linux"
+
+    - name: Install OpenCode (Linux/macOS)
+      ansible.builtin.shell: curl -fsSL https://opencode.ai/install | bash
+      become: false
+      become_user: "{{ remote_regular_user }}"
+      args:
+        creates: "~{{ remote_regular_user }}/.opencode/bin/opencode"
