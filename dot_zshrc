@@ -25,6 +25,11 @@ alias task=go-task
 alias v=nvim
 alias k=kubectl
 
+# Alacritty alias for macOS (ensures new window)
+if [[ "$OSTYPE" == "darwin"* ]] && command -v alacritty &> /dev/null; then
+  alias alacritty="open -a Alacritty --new"
+fi
+
 if [[ -f "$HOME/.claude/local/claude" ]]; then
   alias claude="$HOME/.claude/local/claude"
 fi
