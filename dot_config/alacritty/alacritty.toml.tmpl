@@ -1,0 +1,18 @@
+[font]
+size = 16.0
+normal = { family = "JetBrainsMono Nerd Font", style = "Regular" }
+
+[window]
+opacity = 0.8
+
+[terminal.shell]
+{{- if eq .chezmoi.os "windows" }}
+program = "pwsh"
+{{- else }}
+program = "zsh"
+{{- end }}
+
+[keyboard]
+bindings = [
+  { key = "Slash", mods = "Control", chars = "\u001f" }
+]
