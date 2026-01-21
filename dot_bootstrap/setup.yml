@@ -199,6 +199,7 @@
               - kubectl
               - terraform
               - mole
+              - bun
             state: present
 
         - name: Install GUI applications via Homebrew Cask (macOS)
@@ -355,6 +356,15 @@
         state: present
         update_cache: yes
       when: ansible_os_family == "Debian"
+
+    - name: Install Bun (Linux/macOS)
+      ansible.builtin.shell:
+        cmd: curl -fsSL https://bun.sh/install | bash
+        creates: ~/.bun/bin/bun
+      args:
+        executable: /bin/bash
+      when: ansible_facts["system"] != "Windows"
+      become: false
 
     - name: Ensure .config directory exists for remote_regular_user
       ansible.builtin.file:

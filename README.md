@@ -36,6 +36,7 @@ $env:GITHUB_USERNAME = "GyeongHoKim"
 **Language Runtimes** (via [mise](https://mise.jdx.dev)):
 
 - Node.js (LTS)
+- Bun (JavaScript runtime and package manager)
 - Python (latest stable)
 - Go (latest stable)
 - Rust (latest stable)

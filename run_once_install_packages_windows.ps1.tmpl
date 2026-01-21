@@ -103,6 +103,29 @@ foreach ($package in $packages.GetEnumerator()) {
 Write-Host "`n" -ForegroundColor Yellow
 Install-WingetPackage -PackageId "jdx.mise" -Name "mise"
 
+# Install Bun (JavaScript runtime and package manager)
+Write-Host "`n--- Installing Bun ---" -ForegroundColor Cyan
+
+try {
+    # Check if 'bun' command exists
+    $bunPath = (Get-Command bun -ErrorAction SilentlyContinue).Path
+    if ($bunPath) {
+        Write-Host "  ✓ Bun is already installed at $bunPath" -ForegroundColor Green
+    } else {
+        Write-Host "  Attempting to install Bun..." -ForegroundColor Cyan
+        powershell -c "irm bun.sh/install.ps1|iex"
+        $bunPath = (Get-Command bun -ErrorAction SilentlyContinue).Path
+        if ($bunPath) {
+            Write-Host "  ✓ Bun installed successfully" -ForegroundColor Green
+        } else {
+            Write-Host "  ✗ Bun installation failed: 'bun' command not found after installation." -ForegroundColor Red
+        }
+    }
+}
+catch {
+    Write-Host "  ✗ Bun installation failed: $($_.Exception.Message)" -ForegroundColor Red
+}
+
 # Install Poetry if Python is available
 Write-Host "`nChecking for Python and installing Poetry..." -ForegroundColor Cyan
 $pythonAvailable = Get-Command py -ErrorAction SilentlyContinue
