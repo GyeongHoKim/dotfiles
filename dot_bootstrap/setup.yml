@@ -312,7 +312,7 @@
         shell: /usr/bin/zsh
       when: ansible_facts["system"] != "Darwin"
     
-    - name: Debug: Zsh shell change attempted for Linux
+    - name: "Debug: Zsh shell change attempted for Linux"
       ansible.builtin.debug:
         msg: "Attempted to change default shell to zsh for user {{ remote_regular_user }} on Linux."
       when: ansible_facts["system"] != "Darwin"
