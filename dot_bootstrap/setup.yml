@@ -199,7 +199,6 @@
               - kubectl
               - terraform
               - mole
-              - bun
             state: present
 
         - name: Install GUI applications via Homebrew Cask (macOS)
