@@ -1,0 +1,4 @@
+@opencode/cli
+@anthropic-ai/claude-cli
+@google/gemini-cli
+@qwen/cli

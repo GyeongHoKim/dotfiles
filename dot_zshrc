@@ -38,7 +38,3 @@ alias k=kubectl
 if [[ "$OSTYPE" == "darwin"* ]] && command -v alacritty &> /dev/null; then
   alias alacritty="open -a Alacritty --new"
 fi
-
-if [[ -f "$HOME/.claude/local/claude" ]]; then
-  alias claude="$HOME/.claude/local/claude"
-fi

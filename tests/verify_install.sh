@@ -196,7 +196,10 @@ check_command_with_paths "chezmoi" "Chezmoi" "$HOME/bin/chezmoi" "$HOME/.local/b
 check_command "mise" "mise version manager"
 check_command "git" "Git"
 check_command "gh" "GitHub CLI"
-check_command_with_path "opencode" "$HOME/.opencode/bin/opencode" "OpenCode"
+check_command "opencode" "OpenCode"
+check_command "claude" "Claude Code"
+check_command "gemini" "Gemini CLI"
+check_command "qwen" "Qwen CLI"
 
 echo ""
 echo "--- Shell & Terminal ---"
