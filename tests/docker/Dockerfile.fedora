@@ -29,13 +29,21 @@ RUN chmod +x /home/testuser/collect_debug.sh
 
 # Default command: install chezmoi and apply dotfiles from local source, then verify
 CMD ["/bin/bash", "-c", "\
+    set -x; \
     EXIT_CODE=0; \
+    eval \"$(mise activate bash 2>/dev/null)\" || true; \
+    echo \"--- PATH after mise activate --- \"; \
+    echo $PATH; \
+    echo \"--- npm global root --- \"; \
+    npm root -g; \
     sh -c \"$(curl -fsLS get.chezmoi.io)\" -- init --apply --source /home/testuser/dotfiles || EXIT_CODE=$?; \
+    echo \"--- Disk usage after chezmoi apply --- \"; \
+    df -h; \
     /home/testuser/dotfiles/tests/verify_install.sh || EXIT_CODE=$?; \
-    echo "--- Disk usage before mise install ---"; \
+    echo \"--- Disk usage before mise install --- \"; \
     df -h; \
     mise install || EXIT_CODE=$?; \
-    echo "--- Disk usage after mise install ---"; \
+    echo \"--- Disk usage after mise install --- \"; \
     df -h; \
     /home/testuser/collect_debug.sh; \
     exit $EXIT_CODE \
