@@ -243,7 +243,6 @@ echo "--- Infrastructure Tools ---"
 check_command "kubectl" "kubectl"
 check_command "helm" "Helm"
 check_command "terraform" "Terraform"
-check_command "pulumi" "Pulumi"
 
 # ===== OS-SPECIFIC TOOLS =====
 echo ""

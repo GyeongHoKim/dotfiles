@@ -59,7 +59,7 @@ $env:GITHUB_USERNAME = "GyeongHoKim"
 **Infrastructure Tools:**
 
 - kubectl, helm
-- terraform, pulumi
+- terraform
 
 ### Linux Only (Fedora + Debian/Ubuntu)
 

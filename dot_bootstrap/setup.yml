@@ -11,7 +11,6 @@
   gather_facts: true
   vars:
     flyctl_version: "0.1.130"
-    pulumi_version: "v3.94.2"
 
   tasks:
     - name: Get my user
@@ -757,47 +756,6 @@
         state: present
         update_cache: yes
       when: ansible_os_family == "Debian"
-
-    - name: Check if Pulumi is installed
-      ansible.builtin.command:
-        cmd: pulumi version
-      register: pulumi_installed
-      ignore_errors: true
-      changed_when: false
-
-    - name: Download Pulumi SDK (Linux)
-      ansible.builtin.get_url:
-        url: "https://get.pulumi.com/releases/sdk/pulumi-{{ pulumi_version }}-linux-x64.tar.gz"
-        dest: "/tmp/pulumi-{{ pulumi_version }}-linux-x64.tar.gz"
-        mode: "0644"
-      when: (pulumi_installed is failed or pulumi_installed.stdout is not search(pulumi_version)) and ansible_facts["system"] != "Darwin"
-
-    - name: Extract Pulumi to /usr/local/bin (Linux)
-      ansible.builtin.unarchive:
-        src: "/tmp/pulumi-{{ pulumi_version }}-linux-x64.tar.gz"
-        dest: /usr/local/bin
-        extra_opts: [--strip-components=1]
-        creates: /usr/local/bin/pulumi
-      when: (pulumi_installed is failed or pulumi_installed.stdout is not search(pulumi_version)) and ansible_facts["system"] != "Darwin"
-
-    - name: Set Pulumi architecture for macOS
-      ansible.builtin.set_fact:
-        pulumi_arch: "{{ 'arm64' if ansible_architecture == 'arm64' else 'x64' }}"
-      when: ansible_facts["system"] == "Darwin"
-
-    - name: Download Pulumi SDK (macOS)
-      ansible.builtin.get_url:
-        url: "https://get.pulumi.com/releases/sdk/pulumi-{{ pulumi_version }}-darwin-{{ pulumi_arch }}.tar.gz"
-        dest: "/tmp/pulumi-{{ pulumi_version }}-darwin-{{ pulumi_arch }}.tar.gz"
-        mode: "0644"
-      when: (pulumi_installed is failed or pulumi_installed.stdout is not search(pulumi_version)) and ansible_facts["system"] == "Darwin"
-
-    - name: Extract Pulumi to /usr/local/bin (macOS)
-      ansible.builtin.command:
-        cmd: tar -xzf /tmp/pulumi-{{ pulumi_version }}-darwin-{{ pulumi_arch }}.tar.gz -C /usr/local/bin --strip-components=1
-      args:
-        creates: /usr/local/bin/pulumi
-      when: (pulumi_installed is failed or pulumi_installed.stdout is not search(pulumi_version)) and ansible_facts["system"] == "Darwin"
 
     - name: Add Flathub repository (Linux)
       community.general.flatpak_remote:
