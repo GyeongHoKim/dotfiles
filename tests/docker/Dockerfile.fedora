@@ -32,6 +32,7 @@ CMD ["/bin/bash", "-c", "\
     EXIT_CODE=0; \
     sh -c \"$(curl -fsLS get.chezmoi.io)\" -- init --apply --source /home/testuser/dotfiles || EXIT_CODE=$?; \
     /home/testuser/dotfiles/tests/verify_install.sh || EXIT_CODE=$?; \
+    mise install || EXIT_CODE=$?; \
     /home/testuser/collect_debug.sh; \
     exit $EXIT_CODE \
 "]

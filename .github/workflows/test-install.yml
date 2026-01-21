@@ -71,6 +71,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Install mise tools
+        run: |
+          export PATH="$HOME/bin:$HOME/.local/bin:$PATH"
+          mise install
+
       - name: Run verification
         run: |
           export PATH="$HOME/bin:$HOME/.local/bin:$PATH"
