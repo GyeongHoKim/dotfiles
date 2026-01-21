@@ -311,6 +311,11 @@
         name: "{{ remote_regular_user }}"
         shell: /usr/bin/zsh
       when: ansible_facts["system"] != "Darwin"
+    
+    - name: Debug: Zsh shell change attempted for Linux
+      ansible.builtin.debug:
+        msg: "Attempted to change default shell to zsh for user {{ remote_regular_user }} on Linux."
+      when: ansible_facts["system"] != "Darwin"
 
     - name: Change shell to zsh (macOS)
       ansible.builtin.user:
@@ -318,15 +323,11 @@
         shell: /bin/zsh
       when: ansible_facts["system"] == "Darwin"
 
-    - name: Add mise config manager (Fedora)
-      ansible.builtin.yum_repository:
-        name: mise
-        description: mise Repo
-        baseurl: https://mise.jdx.dev/rpm
-        gpgkey: https://mise.jdx.dev/gpg-key.pub
-        gpgcheck: true
-        enabled: true
+    - name: Enable mise COPR repository (Fedora)
+      ansible.builtin.command:
+        cmd: dnf copr enable jdxcode/mise -y
       when: ansible_os_family == "RedHat"
+      changed_when: false
 
     - name: Install mise (Fedora)
       ansible.builtin.dnf:
@@ -757,6 +758,13 @@
         update_cache: yes
       when: ansible_os_family == "Debian"
 
+
+    - name: Install Claude Code (Linux/macOS)
+      ansible.builtin.shell: curl -fsSL https://claude.ai/install.sh | bash
+      args:
+        creates: ~/.local/bin/claude
+      when: ansible_facts["system"] != "Windows"
+
     - name: Add Flathub repository (Linux)
       community.general.flatpak_remote:
         name: flathub
@@ -840,7 +848,7 @@
         msg:
           - "=================================================================="
           - "Ansible setup complete!"
-          - "Please RESTART your terminal to apply all changes."
+          - "Please RESTART your terminal, or LOG OUT and LOG BACK IN, to apply all changes."
           - ""
           - "After restarting, run the following commands to verify your setup:"
           - "  mise doctor   # Check mise installation"
