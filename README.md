@@ -27,6 +27,7 @@ $env:GITHUB_USERNAME = "GyeongHoKim"
 
 - zsh with [Oh My Zsh](https://ohmyz.sh/)
 - tmux for terminal multiplexing
+- WezTerm (terminal emulator)
 - JetBrains Mono Nerd Font
 
 **Editors:**
