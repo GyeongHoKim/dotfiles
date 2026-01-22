@@ -24,6 +24,12 @@
       when: ansible_os_family == "RedHat"
       changed_when: false
 
+    - name: Add WezTerm COPR repository (Fedora)
+      ansible.builtin.command:
+        cmd: dnf copr enable wezfurlong/wezterm-nightly -y
+      when: ansible_os_family == "RedHat"
+      changed_when: false
+
     - name: Install core packages (Fedora)
       ansible.builtin.dnf:
         name:
@@ -48,6 +54,7 @@
           - fd-find
           - gcc-c++
           - lazygit
+          - wezterm
           - inotify-tools
           - blender
           - toilet
@@ -88,6 +95,22 @@
           - libstdc++-devel
         state: present
       when: ansible_os_family == "RedHat"
+
+    - name: Add WezTerm GPG key (Debian/Ubuntu)
+      ansible.builtin.shell: |
+        curl -fsSL https://apt.fury.io/wez/gpg.key | gpg --dearmor -o /usr/share/keyrings/wezterm-fury.gpg
+        chmod 644 /usr/share/keyrings/wezterm-fury.gpg
+      args:
+        creates: /usr/share/keyrings/wezterm-fury.gpg
+      when: ansible_os_family == "Debian"
+
+    - name: Add WezTerm repository (Debian/Ubuntu)
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/usr/share/keyrings/wezterm-fury.gpg] https://apt.fury.io/wez/ * *"
+        state: present
+        filename: wezterm
+        update_cache: yes
+      when: ansible_os_family == "Debian"
 
     - name: Add Task repository (Debian/Ubuntu)
       ansible.builtin.get_url:
@@ -146,6 +169,7 @@
           - flatpak
           - python3-venv
           - python3-pip
+          - wezterm
         state: present
       when: ansible_os_family == "Debian"
 
@@ -214,6 +238,7 @@
               - insomnia
               - meld
               - db-browser-for-sqlite
+              - wezterm
             state: present
 
         # Docker Desktop Installation for macOS (following official guidelines)
