@@ -19,12 +19,13 @@ run_onchange_reload_gnome-terminal-profiles.sh.tmpl
 .profile
 .tmux.conf
 .config/
-{{- else }}
-# Ignore Windows files on Linux/macOS
-run_once_install_packages_windows.ps1
-run_once_install_ohmyposh.ps1.tmpl
-run_onchange_after_setup_nvim_windows.ps1.tmpl
-run_onchange_bootstrap.ps1.tmpl
-Documents/PowerShell/
-AppData/
-{{- end }}
+  {{- else }}
+  # Ignore Windows files on Linux/macOS
+  run_once_install_packages_windows.ps1
+  run_once_install_ohmyposh.ps1.tmpl
+  run_onchange_after_setup_nvim_windows.ps1.tmpl
+  run_onchange_bootstrap.ps1.tmpl
+  Documents/PowerShell/
+  AppData/
+  dot_glzr/
+  {{- end }}
