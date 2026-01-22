@@ -96,6 +96,13 @@
         state: present
       when: ansible_os_family == "RedHat"
 
+    - name: Install gnupg for GPG key operations (Debian/Ubuntu)
+      ansible.builtin.apt:
+        name: gnupg
+        state: present
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+
     - name: Ensure /usr/share/keyrings exists (Debian/Ubuntu)
       ansible.builtin.file:
         path: /usr/share/keyrings
