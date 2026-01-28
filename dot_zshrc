@@ -38,3 +38,6 @@ alias k=kubectl
 if [[ "$OSTYPE" == "darwin"* ]] && command -v alacritty &> /dev/null; then
   alias alacritty="open -a Alacritty --new"
 fi
+
+# GPG
+export GPG_TTY=$(tty)
