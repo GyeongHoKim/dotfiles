@@ -41,3 +41,6 @@ fi
 
 # GPG
 export GPG_TTY=$(tty)
+if ! pgrep -x -u "${USER}" gpg-agent >/dev/null 2>&1; then
+  gpgconf --launch gpg-agent
+fi
