@@ -61,6 +61,7 @@
           - unar
           - pkg-config
           - flatpak
+          - zoxide
         state: present
       when: ansible_os_family == "RedHat"
 
@@ -183,6 +184,7 @@
           - python3-venv
           - python3-pip
           - wezterm
+          - zoxide
         state: present
       when: ansible_os_family == "Debian"
 
@@ -236,6 +238,8 @@
               - kubectl
               - terraform
               - mole
+              - zoxide
+              - gnupg
             state: present
 
         - name: Install GUI applications via Homebrew Cask (macOS)

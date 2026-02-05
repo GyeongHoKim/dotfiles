@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# When gpg-agent.conf changes, apply permissions and restart gpg-agent so new settings take effect.
+# Hash: {{ include "dot_gnupg/gpg-agent.conf" | sha256sum }}
+agent_conf="${HOME}/.gnupg/gpg-agent.conf"
+if [[ -f "$agent_conf" ]]; then
+  chmod 600 "$agent_conf"
+fi
+if command -v gpgconf &>/dev/null; then
+  gpgconf --kill gpg-agent 2>/dev/null || true
+fi
