@@ -102,3 +102,8 @@ if (Get-Module -ListAvailable -Name PSReadLine) {
 # Welcome message
 Write-Host "PowerShell development environment loaded" -ForegroundColor Green
 Write-Host "Run 'mise current' to see active tool versions" -ForegroundColor Cyan
+
+# Initialize zoxide (smarter cd) - keep at bottom per official docs
+if (Get-Command zoxide -ErrorAction SilentlyContinue) {
+    Invoke-Expression (& { (zoxide init powershell | Out-String) })
+}
