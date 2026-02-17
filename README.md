@@ -129,6 +129,8 @@ The setup will:
 
 ### Windows 11
 
+> **Prerequisite:** Enable **Developer Mode** (`Settings > Privacy & Security > For Developers`) to allow symlink creation without admin privileges. This is required because agent skills are managed via symlinks.
+
 ```powershell
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
 $env:GITHUB_USERNAME = "GyeongHoKim"
