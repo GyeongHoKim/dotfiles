@@ -1,5 +1,10 @@
 #!/bin/bash
 
+{{- if eq (.dotfiles_profile | default "desktop") "server" }}
+# Server profile: skip loading GNOME Terminal dconf
+exit 0
+{{- else }}
+
 # Only run on Linux systems with GNOME
 if [[ "$(uname)" != "Linux" ]]; then
   exit 0
@@ -12,3 +17,4 @@ fi
 
 # .config/gnome-terminal-profiles.dconf hash: {{ include "dot_config/gnome-terminal-profiles.dconf" | sha256sum }}
 dconf load /org/gnome/terminal/legacy/profiles:/ < {{ joinPath .chezmoi.sourceDir "dot_config/gnome-terminal-profiles.dconf" | quote }}
+{{- end }}

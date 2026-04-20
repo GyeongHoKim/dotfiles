@@ -1,3 +1,5 @@
+# Runners are headless. Every job uses chezmoi --override-data '{"dotfiles_profile":"server"}'
+# and tests/verify_install.sh with DOTFILES_PROFILE=server (no desktop/GUI assertions).
 name: Test Dotfiles Installation
 
 on:
@@ -5,75 +7,55 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
-  # Run weekly to catch package changes
   schedule:
     - cron: '0 0 * * 0'
-  # Allow manual trigger
   workflow_dispatch:
 
 jobs:
   test-fedora:
-    name: Test on Fedora
+    name: Fedora (server profile)
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build and test Fedora container
-        run: |
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - run: |
           docker build -f tests/docker/Dockerfile.fedora -t dotfiles-test-fedora .
           docker run --rm dotfiles-test-fedora
 
   test-ubuntu:
-    name: Test on Ubuntu
+    name: Ubuntu (server profile)
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build and test Ubuntu container
-        run: |
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - run: |
           docker build -f tests/docker/Dockerfile.ubuntu -t dotfiles-test-ubuntu .
           docker run --rm dotfiles-test-ubuntu
 
   test-debian:
-    name: Test on Debian
+    name: Debian (server profile)
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build and test Debian container
-        run: |
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - run: |
           docker build -f tests/docker/Dockerfile.debian -t dotfiles-test-debian .
           docker run --rm dotfiles-test-debian
 
   test-macos:
-    name: Test on macOS
+    name: macOS (server profile)
     runs-on: macos-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Install chezmoi and apply dotfiles
+      - uses: actions/checkout@v4
+      - name: Install chezmoi and apply dotfiles (server profile)
         run: |
-          mkdir -p $HOME/.local/bin
-          sh -c "$(curl -fsLS get.chezmoi.io)" -- -b $HOME/.local/bin init --apply $GITHUB_REPOSITORY_OWNER
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
+          mkdir -p "$HOME/.local/bin"
+          sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$HOME/.local/bin"
+          export PATH="$HOME/bin:$HOME/.local/bin:$PATH"
+          chezmoi init --apply --source "$GITHUB_WORKSPACE" --override-data '{"dotfiles_profile":"server"}'
       - name: Run verification
         run: |
           export PATH="$HOME/bin:$HOME/.local/bin:$PATH"
+          export DOTFILES_PROFILE=server
           chmod +x tests/verify_install.sh
           ./tests/verify_install.sh
-

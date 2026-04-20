@@ -45,7 +45,7 @@ esac
 # Install required Ansible collections
 ansible-galaxy collection install community.general
 
-ansible-playbook ~/.bootstrap/setup.yml
+ansible-playbook ~/.bootstrap/setup.yml -e dotfiles_profile={{ .dotfiles_profile | default "desktop" }}
 
 echo "Ansible installation complete."
 

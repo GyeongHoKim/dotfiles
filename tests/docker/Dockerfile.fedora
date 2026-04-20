@@ -1,6 +1,6 @@
+# CI: server profile only (`dotfiles_profile=server`). See entrypoint-linux-server.sh.
 FROM fedora:latest
 
-# Install basic dependencies
 RUN dnf install -y \
     curl \
     git \
@@ -8,30 +8,18 @@ RUN dnf install -y \
     which \
     && dnf clean all
 
-# Create test user with sudo access
 RUN useradd -m -s /bin/bash testuser && \
     echo "testuser ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
-# Switch to test user
 USER testuser
 WORKDIR /home/testuser
 
-# Set environment variables
 ENV HOME=/home/testuser
 ENV USER=testuser
 
-# Copy project files
 COPY --chown=testuser:testuser . /home/testuser/dotfiles
-
-# Copy debug collection script
 COPY --chown=testuser:testuser tests/collect_debug.sh /home/testuser/collect_debug.sh
-RUN chmod +x /home/testuser/collect_debug.sh
+COPY --chown=testuser:testuser tests/docker/entrypoint-linux-server.sh /home/testuser/entrypoint-linux-server.sh
+RUN chmod +x /home/testuser/collect_debug.sh /home/testuser/entrypoint-linux-server.sh
 
-# Default command: install chezmoi and apply dotfiles from local source, then verify
-CMD ["/bin/bash", "-c", "\
-    EXIT_CODE=0; \
-    sh -c \"$(curl -fsLS get.chezmoi.io)\" -- init --apply --source /home/testuser/dotfiles || EXIT_CODE=$?; \
-    /home/testuser/dotfiles/tests/verify_install.sh || EXIT_CODE=$?; \
-    /home/testuser/collect_debug.sh; \
-    exit $EXIT_CODE \
-"]
+CMD ["/home/testuser/entrypoint-linux-server.sh"]
