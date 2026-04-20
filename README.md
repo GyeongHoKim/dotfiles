@@ -2,154 +2,104 @@
 
 [![Linux & macOS](https://github.com/GyeongHoKim/dotfiles/actions/workflows/test-install.yml/badge.svg)](https://github.com/GyeongHoKim/dotfiles/actions/workflows/test-install.yml)
 
-This repo contains the configuration to setup my machines for web development. This is using [Chezmoi](https://chezmoi.io), the dotfile manager to setup the install.
+This repo contains the configuration to setup my machines for web development. It uses [Chezmoi](https://chezmoi.io) as the dotfile manager.
 
 Supported platforms: **Fedora**, **Debian/Ubuntu**, **macOS**, and **Windows 11**
 
+## Continuous integration
+
+[`.github/workflows/test-install.yml`](.github/workflows/test-install.yml) exercises **only the server profile** (`dotfiles_profile=server`), matching headless GitHub-hosted runners: **Fedora**, **Ubuntu**, and **Debian** via Docker, plus **macOS** on `macos-latest`. Each job runs `tests/verify_install.sh` with `DOTFILES_PROFILE=server`. Desktop/GUI installs are not tested in CI. Windows is not covered by this workflow.
+
+## Quick install
+
+**Linux / macOS** — default (includes GUI desktop apps where applicable):
+
 ```shell
 export GITHUB_USERNAME=GyeongHoKim
 sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply $GITHUB_USERNAME
 ```
 
-Windows11:
+**Headless / server (no GUI packages):** if you want to install **without** GUI-oriented applications—especially on **server machines**—use `dotfiles_profile=server`. Pass it on the first apply:
+
+```shell
+export GITHUB_USERNAME=GyeongHoKim
+sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply $GITHUB_USERNAME --override-data '{"dotfiles_profile":"server"}'
+```
+
+Or after setup, run:
+
+```shell
+chezmoi apply --override-data '{"dotfiles_profile":"server"}'
+```
+
+To keep this choice permanently, add to `~/.config/chezmoi/chezmoi.toml`:
+
+```toml
+[data]
+    dotfiles_profile = "server"
+```
+
+The default profile is `desktop` (see `.chezmoi.toml.tmpl`). With `server`, the playbooks and Windows script skip things like Flatpak/GUI apps, WezTerm, Brave/VSCodium/Blender, macOS Casks and Docker Desktop DMG, and the listed Windows GUI winget packages, plus Claude Code installation on Unix.
+
+---
+
+**Windows 11:**
 
 ```powershell
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
 $env:GITHUB_USERNAME = "GyeongHoKim"
 & ([scriptblock]::Create((irm 'https://get.chezmoi.io/ps1'))) init --apply $env:GITHUB_USERNAME
 ```
+
+**Windows, headless / server (no GUI packages):**
+
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
+$env:GITHUB_USERNAME = "GyeongHoKim"
+& ([scriptblock]::Create((irm 'https://get.chezmoi.io/ps1'))) init --apply $env:GITHUB_USERNAME --override-data '{"dotfiles_profile":"server"}'
+```
+
+> **Windows prerequisite:** Enable **Developer Mode** (`Settings > Privacy & Security > For Developers`) so symlinks work without admin (agent skills use symlinks).
+
+---
 
 ## What gets installed
 
-### All Platforms (Linux + macOS)
+Versions for language runtimes are **“latest” / LTS** at install time (see `dot_config/mise/config.toml`).
 
-**Shell & Terminal:**
+**Shell and terminal:** zsh, [Oh My Zsh](https://ohmyz.sh/), tmux, JetBrains Mono Nerd Font (download).
 
-- zsh with [Oh My Zsh](https://ohmyz.sh/)
-- tmux for terminal multiplexing
-- WezTerm (terminal emulator)
-- JetBrains Mono Nerd Font
+**Editor:** Neovim (LazyVim-oriented layout from this repo).
 
-**Editors:**
+**Language runtimes ([mise](https://mise.jdx.dev)):** Node.js LTS, Python, Go, Rust (via `mise install` and related hooks).
 
-- Neovim (configured with LazyVim)
+**CLI:** Git, GitHub CLI (`gh`), ripgrep, fzf, fd, lazygit, go-task, zoxide, build tooling (gcc, make, autoconf, etc.), Poetry (after Python), LuaRocks, Bun (install script).
 
-**Language Runtimes** (via [mise](https://mise.jdx.dev)):
+**Infra:** kubectl, helm, terraform.
 
-- Node.js (LTS)
-- Bun (JavaScript runtime and package manager)
-- Python (latest stable)
-- Go (latest stable)
-- Rust (latest stable)
+**AI / npm (as configured):** Ansible installs **Claude Code** on Linux/macOS when not using the `server` profile. Global npm defaults include `opencode-ai` (`dot_default-npm-packages`) when Node is installed via mise.
 
-> **Note:** Versions are set to "latest" so each new machine setup installs the current stable versions at that time.
+**Linux (Fedora, Debian/Ubuntu):** Docker CE (+ compose/buildx plugins), GNOME Tweaks, inotify-tools, flatpak, podman-compose, Brave Browser, VSCodium (`codium`), Blender, WezTerm (Fedora COPR / Debian repo), Flatpak apps from Flathub (OBS, VLC, Tenacity, Obsidian, GIMP, Insomnia, Foliate, Meld, DB Browser for SQLite), Tailscale install script.
 
-**CLI Development Tools:**
+**macOS:** Homebrew formulae (git, mise, kubectl, terraform, fswatch, etc.), Homebrew Casks (VSCodium, Brave, Blender, OBS, VLC, Obsidian, GIMP, Insomnia, Meld, DB Browser for SQLite, WezTerm), Docker Desktop (DMG when not in CI), Rosetta 2 on Apple Silicon when applicable.
 
-- Git + GitHub CLI (`gh`)
-- AI Coding Agents:
-  - OpenCode
-  - Claude Code
-  - Gemini CLI
-  - Qwen CLI
-- Search: `ripgrep`, `fzf`, `fd-find`
-- Build tools: gcc, make, autoconf
-- Package managers: poetry (Python), luarocks (Lua)
-- Task runner: go-task
-- lazygit
+**Windows:** winget installs Git, gh, Vim, Neovim, Visual Studio Code, Windows Terminal, WezTerm, PowerShell 7+, fzf, GlazeWM, Zebar, Docker Desktop, kubectl, Terraform, Pulumi, Helm, Task, Node LTS, GNU Make, ripgrep, fd, tmux, zoxide, lazygit, Gpg4win, Brave, Obsidian, GIMP, VLC, OBS, Insomnia, mise, Bun (script), Poetry when `py` is available, and Claude Code (desktop profile only; not installed with `server`, and Windows is not in CI).
 
-**Infrastructure Tools:**
+---
 
-- kubectl, helm
-- terraform
+## How the setup runs
 
-### Linux Only (Fedora + Debian/Ubuntu)
+**Linux / macOS** — roughly: install Ansible, run `ansible-playbook` on `dot_bootstrap/setup.yml` with `dotfiles_profile` from Chezmoi data, Oh My Zsh and other `run_once_*` hooks, then mise-related tooling.
 
-**System:**
+**Windows** — packages are driven by the rendered PowerShell script and the same `dotfiles_profile` value.
 
-- Docker (docker-ce)
-- GNOME Tweaks
-- inotify-tools
-- flatpak
-- podman-compose
+---
 
-**GUI Applications (via Flatpak):**
-
-- OBS Studio
-- VLC Media Player
-- Tenacity (audio editor)
-- Obsidian (note-taking)
-- GIMP (image editor)
-- Insomnia (API testing)
-- Foliate (ebook reader)
-- Meld (diff/merge tool)
-- DB Browser for SQLite
-
-**Native Packages:**
-
-- VSCodium
-- Brave Browser
-- Blender (3D graphics)
-
-### macOS Only
-
-**System:**
-
-- Docker Desktop
-- fswatch (file watcher)
-
-**GUI Applications (via Homebrew Cask):**
-
-- VSCodium
-- Brave Browser
-- Blender
-- OBS Studio
-- VLC Media Player
-- Obsidian
-- GIMP
-- Insomnia
-- Meld
-- DB Browser for SQLite
-
-## How to run
-
-### Linux / macOS
-
-```shell
-export GITHUB_USERNAME=GyeongHoKim
-sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply $GITHUB_USERNAME
-```
-
-The setup will:
-
-1. Install Ansible
-2. Run the Ansible playbook to install system packages and mise
-3. Install Oh My Zsh
-4. Configure mise to auto-install language runtimes on first shell login
-
-### Windows 11
-
-> **Prerequisite:** Enable **Developer Mode** (`Settings > Privacy & Security > For Developers`) to allow symlink creation without admin privileges. This is required because agent skills are managed via symlinks.
-
-```powershell
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
-$env:GITHUB_USERNAME = "GyeongHoKim"
-& ([scriptblock]::Create((irm 'https://get.chezmoi.io/ps1'))) init --apply $env:GITHUB_USERNAME
-```
-
-## Managing Language Versions
-
-After installation, use `mise` to manage language versions:
+## Managing language versions
 
 ```bash
-# Check installed versions
 mise current
-
-# Install different versions
 mise use -g node@20
 mise use python@3.11
-
-# Per-project versions
-cd my-project
-mise use node@18  # Creates .tool-versions or mise.toml
+cd my-project && mise use node@18
 ```

@@ -10,7 +10,7 @@
   connection: local
   gather_facts: true
   vars:
-
+    dotfiles_profile: desktop
 
   tasks:
     - name: Get my user
@@ -27,7 +27,9 @@
     - name: Add WezTerm COPR repository (Fedora)
       ansible.builtin.command:
         cmd: dnf copr enable wezfurlong/wezterm-nightly -y
-      when: ansible_os_family == "RedHat"
+      when:
+        - ansible_os_family == "RedHat"
+        - dotfiles_profile != "server"
       changed_when: false
 
     - name: Install core packages (Fedora)
@@ -37,7 +39,6 @@
           - htop
           - neovim
           - gh
-          - gnome-tweaks
           - gcc
           - helm
           - go-task
@@ -54,16 +55,25 @@
           - fd-find
           - gcc-c++
           - lazygit
-          - wezterm
           - inotify-tools
-          - blender
           - toilet
           - unar
           - pkg-config
-          - flatpak
           - zoxide
         state: present
       when: ansible_os_family == "RedHat"
+
+    - name: Install desktop-only packages (Fedora)
+      ansible.builtin.dnf:
+        name:
+          - gnome-tweaks
+          - wezterm
+          - blender
+          - flatpak
+        state: present
+      when:
+        - ansible_os_family == "RedHat"
+        - dotfiles_profile != "server"
 
     - name: Install development groups (Fedora)
       ansible.builtin.dnf:
@@ -117,14 +127,18 @@
         chmod 644 /usr/share/keyrings/wezterm-fury.gpg
       args:
         creates: /usr/share/keyrings/wezterm-fury.gpg
-      when: ansible_os_family == "Debian"
+      when:
+        - ansible_os_family == "Debian"
+        - dotfiles_profile != "server"
 
     - name: Add WezTerm repository (Debian/Ubuntu)
       ansible.builtin.shell: |
         echo 'deb [signed-by=/usr/share/keyrings/wezterm-fury.gpg] https://apt.fury.io/wez/ * *' | tee /etc/apt/sources.list.d/wezterm.list
       args:
         creates: /etc/apt/sources.list.d/wezterm.list
-      when: ansible_os_family == "Debian"
+      when:
+        - ansible_os_family == "Debian"
+        - dotfiles_profile != "server"
 
     - name: Add Task repository (Debian/Ubuntu)
       ansible.builtin.get_url:
@@ -145,7 +159,6 @@
           - htop
           - neovim
           - gh
-          - gnome-tweaks
           - gcc
           - task
           - ripgrep
@@ -177,16 +190,26 @@
           - libxslt1-dev
           - podman-compose
           - inotify-tools
-          - blender
           - toilet
           - unar
-          - flatpak
           - python3-venv
           - python3-pip
-          - wezterm
           - zoxide
         state: present
       when: ansible_os_family == "Debian"
+
+    - name: Install desktop-only packages (Debian/Ubuntu)
+      ansible.builtin.apt:
+        update_cache: yes
+        name:
+          - gnome-tweaks
+          - blender
+          - flatpak
+          - wezterm
+        state: present
+      when:
+        - ansible_os_family == "Debian"
+        - dotfiles_profile != "server"
 
     - name: Create fd symlink (Debian/Ubuntu)
       ansible.builtin.file:
@@ -257,6 +280,7 @@
               - db-browser-for-sqlite
               - wezterm
             state: present
+          when: dotfiles_profile != "server"
 
         # Docker Desktop Installation for macOS (following official guidelines)
         - name: Set architecture-specific Docker Desktop URL (macOS)
@@ -268,6 +292,7 @@
           when:
             - ansible_facts["system"] == "Darwin"
             - lookup('env', 'GITHUB_ACTIONS') != 'true'
+            - dotfiles_profile != "server"
 
         - name: Create temporary directory for Docker Desktop download (macOS)
           ansible.builtin.file:
@@ -277,6 +302,7 @@
           when:
             - ansible_facts["system"] == "Darwin"
             - lookup('env', 'GITHUB_ACTIONS') != 'true'
+            - dotfiles_profile != "server"
 
         - name: Download Docker Desktop DMG (macOS)
           ansible.builtin.get_url:
@@ -286,6 +312,7 @@
           when:
             - ansible_facts["system"] == "Darwin"
             - lookup('env', 'GITHUB_ACTIONS') != 'true'
+            - dotfiles_profile != "server"
 
         - name: Mount Docker Desktop DMG (macOS)
           ansible.builtin.command: hdiutil attach "/tmp/docker_install/Docker.dmg"
@@ -294,6 +321,7 @@
           when:
             - ansible_facts["system"] == "Darwin"
             - lookup('env', 'GITHUB_ACTIONS') != 'true'
+            - dotfiles_profile != "server"
 
         - name: Install Docker Desktop (macOS)
           ansible.builtin.command: /Volumes/Docker/Docker.app/Contents/MacOS/install --accept-license
@@ -303,6 +331,7 @@
           when:
             - ansible_facts["system"] == "Darwin"
             - lookup('env', 'GITHUB_ACTIONS') != 'true'
+            - dotfiles_profile != "server"
 
         - name: Install Rosetta 2 on Apple Silicon (macOS)
           ansible.builtin.command: softwareupdate --install-rosetta --agree-to-license
@@ -319,6 +348,7 @@
           when:
             - ansible_facts["system"] == "Darwin"
             - lookup('env', 'GITHUB_ACTIONS') != 'true'
+            - dotfiles_profile != "server"
             - docker_dmg_mount.rc is defined and docker_dmg_mount.rc == 0
           failed_when: false
 
@@ -329,6 +359,7 @@
           when:
             - ansible_facts["system"] == "Darwin"
             - lookup('env', 'GITHUB_ACTIONS') != 'true'
+            - dotfiles_profile != "server"
 
         - name: Check if Docker CLI is available (macOS)
           ansible.builtin.command: docker --version
@@ -338,6 +369,7 @@
           when:
             - ansible_facts["system"] == "Darwin"
             - lookup('env', 'GITHUB_ACTIONS') != 'true'
+            - dotfiles_profile != "server"
 
         - name: Display Docker Desktop installation message (macOS)
           ansible.builtin.debug:
@@ -347,6 +379,7 @@
           when:
             - ansible_facts["system"] == "Darwin"
             - lookup('env', 'GITHUB_ACTIONS') != 'true'
+            - dotfiles_profile != "server"
 
     - name: Change shell to zsh (Linux)
       ansible.builtin.user:
@@ -530,19 +563,28 @@
         gpgkey: https://brave-browser-rpm-release.s3.brave.com/brave-core.asc
         gpgcheck: true
         enabled: true
-      when: ansible_os_family == "RedHat" and ansible_architecture == "x86_64"
+      when:
+        - ansible_os_family == "RedHat"
+        - ansible_architecture == "x86_64"
+        - dotfiles_profile != "server"
 
     - name: Import Brave Browser GPG Key (Fedora)
       ansible.builtin.rpm_key:
         key: https://brave-browser-rpm-release.s3.brave.com/brave-core.asc
         state: present
-      when: ansible_os_family == "RedHat" and ansible_architecture == "x86_64"
+      when:
+        - ansible_os_family == "RedHat"
+        - ansible_architecture == "x86_64"
+        - dotfiles_profile != "server"
 
     - name: Install Brave Browser (Fedora)
       ansible.builtin.dnf:
         name: brave-browser
         state: present
-      when: ansible_os_family == "RedHat" and ansible_architecture == "x86_64"
+      when:
+        - ansible_os_family == "RedHat"
+        - ansible_architecture == "x86_64"
+        - dotfiles_profile != "server"
       ignore_errors: yes
 
     - name: Import Brave Browser GPG Key (Debian/Ubuntu)
@@ -550,7 +592,9 @@
         url: https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg
         dest: /usr/share/keyrings/brave-browser-archive-keyring.gpg
         mode: "0644"
-      when: ansible_os_family == "Debian"
+      when:
+        - ansible_os_family == "Debian"
+        - dotfiles_profile != "server"
 
     - name: Set architecture fact for Debian
       ansible.builtin.set_fact:
@@ -562,14 +606,18 @@
         repo: "deb [signed-by=/usr/share/keyrings/brave-browser-archive-keyring.gpg arch={{ debian_arch }}] https://brave-browser-apt-release.s3.brave.com/ stable main"
         state: present
         update_cache: yes
-      when: ansible_os_family == "Debian"
+      when:
+        - ansible_os_family == "Debian"
+        - dotfiles_profile != "server"
 
     - name: Install Brave Browser (Debian/Ubuntu)
       ansible.builtin.apt:
         name: brave-browser
         state: present
         update_cache: yes
-      when: ansible_os_family == "Debian"
+      when:
+        - ansible_os_family == "Debian"
+        - dotfiles_profile != "server"
 
     - name: Add VSCodium Repo (Fedora)
       ansible.builtin.yum_repository:
@@ -581,20 +629,26 @@
         repo_gpgcheck: true
         enabled: true
         metadata_expire: 3600
-      when: ansible_os_family == "RedHat"
+      when:
+        - ansible_os_family == "RedHat"
+        - dotfiles_profile != "server"
 
     - name: Install VSCodium (Fedora)
       ansible.builtin.dnf:
         name: codium
         state: present
-      when: ansible_os_family == "RedHat"
+      when:
+        - ansible_os_family == "RedHat"
+        - dotfiles_profile != "server"
 
     - name: Add VSCodium GPG key (Debian/Ubuntu)
       ansible.builtin.shell: |
         wget -qO - https://gitlab.com/paulcarroty/vscodium-deb-rpm-repo/raw/master/pub.gpg | gpg --dearmor | dd of=/usr/share/keyrings/vscodium-archive-keyring.gpg
       args:
         creates: /usr/share/keyrings/vscodium-archive-keyring.gpg
-      when: ansible_os_family == "Debian"
+      when:
+        - ansible_os_family == "Debian"
+        - dotfiles_profile != "server"
 
     - name: Add VSCodium Repo (Debian/Ubuntu)
       ansible.builtin.apt_repository:
@@ -602,14 +656,18 @@
         state: present
         filename: vscodium
         update_cache: yes
-      when: ansible_os_family == "Debian"
+      when:
+        - ansible_os_family == "Debian"
+        - dotfiles_profile != "server"
 
     - name: Install VSCodium (Debian/Ubuntu)
       ansible.builtin.apt:
         name: codium
         state: present
         update_cache: yes
-      when: ansible_os_family == "Debian"
+      when:
+        - ansible_os_family == "Debian"
+        - dotfiles_profile != "server"
 
     - name: Add Docker repo (Fedora)
       ansible.builtin.yum_repository:
@@ -802,26 +860,22 @@
         update_cache: yes
       when: ansible_os_family == "Debian"
 
-    - name: Install Terraform (Debian/Ubuntu)
-      ansible.builtin.apt:
-        name: terraform
-        state: present
-        update_cache: yes
-      when: ansible_os_family == "Debian"
-
-
     - name: Install Claude Code (Linux/macOS)
       ansible.builtin.shell: curl -fsSL https://claude.ai/install.sh | bash
       args:
         creates: ~/.local/bin/claude
-      when: ansible_facts["system"] != "Windows"
+      when:
+        - ansible_facts["system"] != "Windows"
+        - dotfiles_profile != "server"
 
     - name: Add Flathub repository (Linux)
       community.general.flatpak_remote:
         name: flathub
         flatpakrepo_url: https://dl.flathub.org/repo/flathub.flatpakrepo
         state: present
-      when: ansible_facts["system"] != "Darwin"
+      when:
+        - ansible_facts["system"] != "Darwin"
+        - dotfiles_profile != "server"
       ignore_errors: yes
 
     - name: Install Flatpak packages (Linux)
@@ -837,7 +891,9 @@
           - org.gnome.meld
           - org.sqlitebrowser.sqlitebrowser
         state: present
-      when: ansible_facts["system"] != "Darwin"
+      when:
+        - ansible_facts["system"] != "Darwin"
+        - dotfiles_profile != "server"
       ignore_errors: yes
 
     - name: Ensure fonts directory (Linux)

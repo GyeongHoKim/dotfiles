@@ -44,56 +44,56 @@ if (-not (Test-WingetAvailable)) {
 
 Write-Host "winget is available. Proceeding with installation..." -ForegroundColor Green
 
-# Core development tools
-$packages = @{
-    # Version Control & CLI Tools
+$DotfilesProfile = "{{ .dotfiles_profile | default "desktop" }}"
+Write-Host "dotfiles_profile: $DotfilesProfile" -ForegroundColor Cyan
+
+# Shared on desktop and server (CLI / infra)
+$commonPackages = @{
     "Git.Git" = "Git"
     "GitHub.cli" = "GitHub CLI"
-
-    # Editors
     "vim.vim" = "Vim"
     "Neovim.Neovim" = "Neovim"
-    "Microsoft.VisualStudioCode" = "Visual Studio Code"
-
-    # Terminal & Shell Tools
     "Microsoft.WindowsTerminal" = "Windows Terminal"
-    "wez.wezterm" = "WezTerm"
     "Microsoft.PowerShell" = "PowerShell 7+"
     "junegunn.fzf" = "fzf"
-
-    # Window Manager
-    "glzr-io.glazewm" = "GlazeWM"
-    "glzr-io.zebar" = "Zebar"
-
-    # Container Tools
     "Docker.DockerDesktop" = "Docker Desktop"
-
-    # Infrastructure Tools
     "Kubernetes.kubectl" = "kubectl"
     "Hashicorp.Terraform" = "Terraform"
     "Pulumi.Pulumi" = "Pulumi"
     "Helm.Helm" = "Helm"
-
-    # Build Tools
     "GoTask.Task" = "Task"
     "OpenJS.NodeJS.LTS" = "Node.js LTS"
     "GnuWin32.Make" = "GNU Make"
-
-    # Utilities
     "BurntSushi.ripgrep.MSVC" = "ripgrep"
     "sharkdp.fd" = "fd"
     "tmux.tmux" = "tmux"
     "ajeetdsouza.zoxide" = "zoxide"
     "JesseDuffield.lazygit" = "lazygit"
     "GnuPG.Gpg4win" = "Gpg4win (GNU GPG for Windows)"
+}
 
-    # GUI Applications
+# Desktop-only: GUI apps, tiling WM, VS Code, WezTerm
+$desktopPackages = @{
+    "Microsoft.VisualStudioCode" = "Visual Studio Code"
+    "wez.wezterm" = "WezTerm"
+    "glzr-io.glazewm" = "GlazeWM"
+    "glzr-io.zebar" = "Zebar"
     "Brave.Brave" = "Brave Browser"
     "Obsidian.Obsidian" = "Obsidian"
     "GIMP.GIMP" = "GIMP"
     "VideoLAN.VLC" = "VLC"
     "OBSProject.OBSStudio" = "OBS Studio"
     "Insomnia.Insomnia" = "Insomnia"
+}
+
+$packages = @{}
+foreach ($entry in $commonPackages.GetEnumerator()) {
+    $packages[$entry.Key] = $entry.Value
+}
+if ($DotfilesProfile -ne "server") {
+    foreach ($entry in $desktopPackages.GetEnumerator()) {
+        $packages[$entry.Key] = $entry.Value
+    }
 }
 
 # Install packages
@@ -165,7 +165,9 @@ Write-Host "4. Run 'mise install' to install language runtimes (Node, Python, Go
 Write-Host "`n" -ForegroundColor Yellow
 Write-Host "--- Installing Claude Code (Native) ---" -ForegroundColor Cyan
 
-if ($env:CI) {
+if ($DotfilesProfile -eq "server") {
+    Write-Host "Skipping Claude Code installation (server profile)." -ForegroundColor Yellow
+} elseif ($env:CI) {
     Write-Host "Skipping Claude Code installation in CI environment." -ForegroundColor Yellow
 } else {
     try {

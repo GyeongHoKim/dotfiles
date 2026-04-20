@@ -27,6 +27,9 @@ else
     DISTRO="unknown"
 fi
 
+# desktop (default) or server — must match chezmoi data dotfiles_profile for Ansible/Windows
+DOTFILES_PROFILE="${DOTFILES_PROFILE:-desktop}"
+
 # Check if running inside a container
 is_container() {
     [[ -f /.dockerenv ]] || [[ -f /run/.containerenv ]] || grep -qE 'docker|lxc|containerd' /proc/1/cgroup 2>/dev/null
@@ -184,7 +187,7 @@ check_cask_app() {
 echo "============================================"
 echo "Dotfiles Installation Verification"
 echo "============================================"
-echo "OS: $OS | Distro: $DISTRO"
+echo "OS: $OS | Distro: $DISTRO | dotfiles_profile: $DOTFILES_PROFILE"
 if is_container; then
     echo "Environment: Container (GUI apps not tested)"
 fi
@@ -245,14 +248,16 @@ echo ""
 echo "--- OS-Specific Tools ---"
 
 if [[ "$OS" == "Linux" ]]; then
-    # Linux-only CLI tools
-    check_command "gnome-tweaks" "GNOME Tweaks"
     check_command_alternatives "inotifywait inotify-wait" "inotify-tools"
-    check_command "flatpak" "Flatpak"
     check_command "docker" "Docker"
 
+    if [[ "$DOTFILES_PROFILE" != "server" ]]; then
+        check_command "gnome-tweaks" "GNOME Tweaks"
+        check_command "flatpak" "Flatpak"
+    fi
+
     # GUI apps and flatpak apps require display server, not testable in containers
-    if ! is_container; then
+    if ! is_container && [[ "$DOTFILES_PROFILE" != "server" ]]; then
         echo ""
         echo "--- GUI Applications (Native) ---"
         check_command "brave-browser" "Brave Browser"
@@ -275,19 +280,20 @@ if [[ "$OS" == "Linux" ]]; then
 elif [[ "$OS" == "Darwin" ]]; then
     check_command "fswatch" "fswatch"
 
-    # macOS Cask apps
-    echo ""
-    echo "--- GUI Applications (Homebrew Cask) ---"
-    check_cask_app "Brave Browser" "Brave Browser"
-    check_cask_app "VSCodium" "VSCodium"
-    check_cask_app "Blender" "Blender"
-    check_cask_app "OBS" "OBS Studio"
-    check_cask_app "VLC" "VLC Media Player"
-    check_cask_app "Obsidian" "Obsidian"
-    check_cask_app "GIMP" "GIMP"
-    check_cask_app "Insomnia" "Insomnia"
-    check_cask_app "Meld" "Meld"
-    check_cask_app "DB Browser for SQLite" "DB Browser for SQLite"
+    if [[ "$DOTFILES_PROFILE" != "server" ]]; then
+        echo ""
+        echo "--- GUI Applications (Homebrew Cask) ---"
+        check_cask_app "Brave Browser" "Brave Browser"
+        check_cask_app "VSCodium" "VSCodium"
+        check_cask_app "Blender" "Blender"
+        check_cask_app "OBS" "OBS Studio"
+        check_cask_app "VLC" "VLC Media Player"
+        check_cask_app "Obsidian" "Obsidian"
+        check_cask_app "GIMP" "GIMP"
+        check_cask_app "Insomnia" "Insomnia"
+        check_cask_app "Meld" "Meld"
+        check_cask_app "DB Browser for SQLite" "DB Browser for SQLite"
+    fi
 fi
 
 # ===== FONTS =====
