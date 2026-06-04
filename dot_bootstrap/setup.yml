@@ -11,6 +11,8 @@
   gather_facts: true
   vars:
     dotfiles_profile: desktop
+    # pkgs.k8s.io v1.28 and older use GPG signature packet v3, rejected by Debian apt/sqv since 2026-02-01.
+    kubectl_minor_version: "v1.36"
 
   tasks:
     - name: Get my user
@@ -761,8 +763,8 @@
       ansible.builtin.yum_repository:
         name: Kubernetes
         description: Kubernetes repo
-        baseurl: https://pkgs.k8s.io/core:/stable:/v1.28/rpm/
-        gpgkey: https://pkgs.k8s.io/core:/stable:/v1.28/rpm/repodata/repomd.xml.key
+        baseurl: "https://pkgs.k8s.io/core:/stable:/{{ kubectl_minor_version }}/rpm/"
+        gpgkey: "https://pkgs.k8s.io/core:/stable:/{{ kubectl_minor_version }}/rpm/repodata/repomd.xml.key"
         gpgcheck: true
         enabled: true
       when: ansible_os_family == "RedHat"
@@ -780,17 +782,35 @@
         mode: "0755"
       when: ansible_os_family == "Debian"
 
+    - name: Find legacy kubectl apt sources (Debian/Ubuntu)
+      ansible.builtin.find:
+        paths: /etc/apt/sources.list.d
+        patterns:
+          - "*kubernetes*"
+          - "*pkgs_k8s*"
+      register: legacy_kubectl_apt_sources
+      when: ansible_os_family == "Debian"
+
+    - name: Remove legacy kubectl apt sources (Debian/Ubuntu)
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        state: absent
+      loop: "{{ legacy_kubectl_apt_sources.files }}"
+      when:
+        - ansible_os_family == "Debian"
+        - legacy_kubectl_apt_sources.matched | default(0) > 0
+
     - name: Add kubectl GPG key (Debian/Ubuntu)
       ansible.builtin.shell: |
-        curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-      args:
-        creates: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+        curl -fsSL "https://pkgs.k8s.io/core:/stable:/{{ kubectl_minor_version }}/deb/Release.key" | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+        chmod 644 /etc/apt/keyrings/kubernetes-apt-keyring.gpg
       when: ansible_os_family == "Debian"
 
     - name: Add kubectl repo (Debian/Ubuntu)
       ansible.builtin.apt_repository:
-        repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /"
+        repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/{{ kubectl_minor_version }}/deb/ /"
         state: present
+        filename: kubernetes
         update_cache: yes
       when: ansible_os_family == "Debian"
 

@@ -63,6 +63,73 @@ $env:GITHUB_USERNAME = "GyeongHoKim"
 
 ---
 
+## Recovering from a failed install
+
+Bootstrap runs Ansible and several `run_once_*` scripts. If it fails partway through, **re-running the same install command is often not enough**: chezmoi may still use an old source checkout, or scripts may be treated as already finished. After a fix is released, start from a clean chezmoi state and re-run bootstrap from the beginning.
+
+### Linux / macOS
+
+**Option A — full clean restart (recommended after a fix release)**
+
+Removes chezmoi's source, config, and script state. Files already applied to your home directory are kept; bootstrap scripts run again on the next apply.
+
+```shell
+export GITHUB_USERNAME=GyeongHoKim
+# Add --override-data when using the server profile (see Quick install above).
+
+chezmoi purge --force
+
+sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply $GITHUB_USERNAME
+# Server profile example:
+# sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply $GITHUB_USERNAME --override-data '{"dotfiles_profile":"server"}'
+```
+
+**Option B — keep chezmoi, refresh source and re-run scripts**
+
+Use this if you prefer not to remove chezmoi's configuration entirely. Requires `chezmoi` on your `PATH` (often `~/bin` or `~/.local/bin` after the first install attempt).
+
+```shell
+export GITHUB_USERNAME=GyeongHoKim
+
+# Fetch the latest dotfiles from GitHub and re-apply
+chezmoi update --init --apply
+# Server profile example:
+# chezmoi update --init --apply --override-data '{"dotfiles_profile":"server"}'
+
+# Force run_once_* scripts (e.g. Ansible bootstrap) to run again
+chezmoi state delete-bucket --bucket=scriptState
+chezmoi apply
+# Server profile example:
+# chezmoi apply --override-data '{"dotfiles_profile":"server"}'
+```
+
+If `run_onchange_*` hooks should also re-run (for example after `dot_bootstrap/setup.yml` changed), clear their state as well:
+
+```shell
+chezmoi state delete-bucket --bucket=entryState
+chezmoi apply
+```
+
+**Linux only — package manager errors after a partial run**
+
+Ansible may leave half-configured APT or DNF repositories before it exits. If `apt update` or the playbook still fails with conflicting repo settings (for example duplicate `Signed-By` keyrings), fix or remove the broken entries under `/etc/apt/sources.list.d/` (or the equivalent DNF repo files), then run **Option A** or **Option B** again.
+
+### Windows 11
+
+```powershell
+$env:GITHUB_USERNAME = "GyeongHoKim"
+
+chezmoi purge --force
+
+& ([scriptblock]::Create((irm 'https://get.chezmoi.io/ps1'))) init --apply $env:GITHUB_USERNAME
+# Server profile example:
+# & ([scriptblock]::Create((irm 'https://get.chezmoi.io/ps1'))) init --apply $env:GITHUB_USERNAME --override-data '{"dotfiles_profile":"server"}'
+```
+
+If you prefer not to purge, run `chezmoi update --init --apply`, then `chezmoi state delete-bucket --bucket=scriptState`, then `chezmoi apply` (with `--override-data` if you use the server profile).
+
+---
+
 ## What gets installed
 
 Versions for language runtimes are **“latest” / LTS** at install time (see `dot_config/mise/config.toml`).
