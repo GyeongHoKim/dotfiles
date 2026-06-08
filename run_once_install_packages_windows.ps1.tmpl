@@ -65,6 +65,7 @@ $commonPackages = @{
     "OpenJS.NodeJS.LTS" = "Node.js LTS"
     "GnuWin32.Make" = "GNU Make"
     "BurntSushi.ripgrep.MSVC" = "ripgrep"
+    "charmbracelet.glow" = "glow"
     "sharkdp.fd" = "fd"
     "tmux.tmux" = "tmux"
     "ajeetdsouza.zoxide" = "zoxide"
@@ -160,36 +161,6 @@ Write-Host "1. Restart your terminal to load new PATH entries" -ForegroundColor 
 Write-Host "2. Launch Docker Desktop to start the Docker daemon" -ForegroundColor White
 Write-Host "3. Run 'mise doctor' to verify mise installation" -ForegroundColor White
 Write-Host "4. Run 'mise install' to install language runtimes (Node, Python, Go, Rust)" -ForegroundColor White
-
-# Install Claude Code (Native)
-Write-Host "`n" -ForegroundColor Yellow
-Write-Host "--- Installing Claude Code (Native) ---" -ForegroundColor Cyan
-
-if ($DotfilesProfile -eq "server") {
-    Write-Host "Skipping Claude Code installation (server profile)." -ForegroundColor Yellow
-} elseif ($env:CI) {
-    Write-Host "Skipping Claude Code installation in CI environment." -ForegroundColor Yellow
-} else {
-    try {
-        # Check if 'claude' command exists
-        $claudePath = (Get-Command claude -ErrorAction SilentlyContinue).Path
-        if ($claudePath) {
-            Write-Host "Claude Code is already installed at $claudePath" -ForegroundColor Green
-        } else {
-            Write-Host "Attempting to install Claude Code natively..." -ForegroundColor Cyan
-            irm https://claude.ai/install.ps1 | iex
-            $claudePath = (Get-Command claude -ErrorAction SilentlyContinue).Path
-            if ($claudePath) {
-                Write-Host "  ✓ Claude Code installed successfully to $claudePath" -ForegroundColor Green
-            } else {
-                Write-Host "  ✗ Claude Code installation failed: 'claude' command not found after installation." -ForegroundColor Red
-            }
-        }
-    }
-    catch {
-        Write-Host "  ✗ Claude Code native installation failed: $($_.Exception.Message)" -ForegroundColor Red
-    }
-}
 
 Write-Host ""
 {{- end }}

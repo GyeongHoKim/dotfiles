@@ -39,7 +39,7 @@ To keep this choice permanently, add to `~/.config/chezmoi/chezmoi.toml`:
     dotfiles_profile = "server"
 ```
 
-The default profile is `desktop` (see `.chezmoi.toml.tmpl`). With `server`, the playbooks and Windows script skip things like Flatpak/GUI apps, WezTerm, Brave/VSCodium/Blender, macOS Casks and Docker Desktop DMG, and the listed Windows GUI winget packages, plus Claude Code installation on Unix.
+The default profile is `desktop` (see `.chezmoi.toml.tmpl`). With `server`, the playbooks and Windows script skip things like Flatpak/GUI apps, WezTerm, Brave/VSCodium/Blender, macOS Casks and Docker Desktop DMG, and the listed Windows GUI winget packages.
 
 ---
 
@@ -140,17 +140,53 @@ Versions for language runtimes are **“latest” / LTS** at install time (see `
 
 **Language runtimes ([mise](https://mise.jdx.dev)):** Node.js LTS, Python, Go, Rust (via `mise install` and related hooks).
 
-**CLI:** Git, GitHub CLI (`gh`), ripgrep, fzf, fd, lazygit, go-task, zoxide, build tooling (gcc, make, autoconf, etc.), Poetry (after Python), LuaRocks, Bun (install script).
+**CLI:** Git, GitHub CLI (`gh`), ripgrep, fzf, fd, lazygit, [glow](https://github.com/charmbracelet/glow) (terminal markdown reader), go-task, zoxide, build tooling (gcc, make, autoconf, etc.), Poetry (after Python), LuaRocks, Bun (install script).
 
 **Infra:** kubectl, helm, terraform.
-
-**AI / npm (as configured):** Ansible installs **Claude Code** on Linux/macOS when not using the `server` profile. Global npm defaults include `opencode-ai` (`dot_default-npm-packages`) when Node is installed via mise.
 
 **Linux (Fedora, Debian/Ubuntu):** Docker CE (+ compose/buildx plugins), GNOME Tweaks, inotify-tools, flatpak, podman-compose, Brave Browser, VSCodium (`codium`), Blender, WezTerm (Fedora COPR / Debian repo), Flatpak apps from Flathub (OBS, VLC, Tenacity, Obsidian, GIMP, Insomnia, Foliate, Meld, DB Browser for SQLite), Tailscale install script.
 
 **macOS:** Homebrew formulae (git, mise, kubectl, terraform, fswatch, etc.), Homebrew Casks (VSCodium, Brave, Blender, OBS, VLC, Obsidian, GIMP, Insomnia, Meld, DB Browser for SQLite, WezTerm), Docker Desktop (DMG when not in CI), Rosetta 2 on Apple Silicon when applicable.
 
-**Windows:** winget installs Git, gh, Vim, Neovim, Visual Studio Code, Windows Terminal, WezTerm, PowerShell 7+, fzf, GlazeWM, Zebar, Docker Desktop, kubectl, Terraform, Pulumi, Helm, Task, Node LTS, GNU Make, ripgrep, fd, tmux, zoxide, lazygit, Gpg4win, Brave, Obsidian, GIMP, VLC, OBS, Insomnia, mise, Bun (script), Poetry when `py` is available, and Claude Code (desktop profile only; not installed with `server`, and Windows is not in CI).
+**Windows:** winget installs Git, gh, Vim, Neovim, Visual Studio Code, Windows Terminal, WezTerm, PowerShell 7+, fzf, GlazeWM, Zebar, Docker Desktop, kubectl, Terraform, Pulumi, Helm, Task, Node LTS, GNU Make, ripgrep, glow, fd, tmux, zoxide, lazygit, Gpg4win, Brave, Obsidian, GIMP, VLC, OBS, Insomnia, mise, Bun (script), and Poetry when `py` is available (Windows is not in CI).
+
+---
+
+## Agent skills
+
+This repo ships global agent skills under `dot_agents/skills/`, which Chezmoi deploys to `~/.agents/skills/`. That directory is the **canonical** global store used by the [skills](https://skills.sh/) CLI, but copying files there does **not** automatically make them available in every AI coding agent.
+
+| Agent type | Reads from | Action needed |
+|------------|------------|---------------|
+| Universal (e.g. Cline, Gemini CLI) | `~/.agents/skills/` | None — skills are picked up directly |
+| Non-universal (e.g. Claude Code, Cursor, Codex) | Agent-specific dir (e.g. `~/.claude/skills/`, `~/.cursor/skills/`) | Symlink from the canonical copy (see below) |
+
+### Link skills to your AI CLI
+
+1. Install the AI CLI tools you want (Claude Code, Cursor, Codex, OpenCode, etc.).
+2. Run the [skills CLI](https://skills.sh/docs/cli) to symlink the global skills from `~/.agents/skills/` into each agent's directory. Symlinks are the default install method.
+
+**All installed agents** (auto-detected):
+
+```bash
+npx skills add ~/.agents/skills -g -a '*' -y --all
+```
+
+**Specific agents** (repeat `-a` for each):
+
+```bash
+npx skills add ~/.agents/skills -g -a claude-code -a cursor -a codex -y --all
+```
+
+Common agent identifiers: `claude-code`, `cursor`, `codex`, `windsurf`, `github-copilot`, `opencode`. See `npx skills add --help` for the full list.
+
+Verify linked skills for an agent:
+
+```bash
+npx skills ls -g -a claude-code
+```
+
+Re-run the `skills add` command after adding new skills to this repo or when you install another AI CLI. On Windows, symlinks require **Developer Mode** (see the Windows prerequisite in [Quick install](#quick-install)).
 
 ---
 

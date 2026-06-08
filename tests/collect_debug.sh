@@ -67,7 +67,7 @@ done
 # Installed commands check
 {
     echo "=== Command availability ==="
-    for cmd in chezmoi git zsh tmux nvim mise fzf rg fd lazygit; do
+    for cmd in chezmoi git zsh tmux nvim mise fzf rg fd glow lazygit; do
         if command -v "$cmd" &>/dev/null; then
             echo "[OK] $cmd: $(command -v "$cmd")"
         else
