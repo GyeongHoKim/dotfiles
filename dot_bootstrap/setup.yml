@@ -156,6 +156,22 @@
         - ansible_os_family == "Debian"
         - dotfiles_profile != "server"
 
+    - name: Add Charm GPG key (Debian/Ubuntu)
+      ansible.builtin.shell: |
+        curl -fsSL https://repo.charm.sh/apt/gpg.key | gpg --yes --dearmor -o /usr/share/keyrings/charm-archive-keyring.gpg
+        chmod 644 /usr/share/keyrings/charm-archive-keyring.gpg
+      args:
+        creates: /usr/share/keyrings/charm-archive-keyring.gpg
+      when: ansible_os_family == "Debian"
+
+    - name: Add Charm repository (Debian/Ubuntu)
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/usr/share/keyrings/charm-archive-keyring.gpg] https://repo.charm.sh/apt/ * *"
+        state: present
+        filename: charm
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+
     - name: Add Task repository (Debian/Ubuntu)
       ansible.builtin.get_url:
         url: https://dl.cloudsmith.io/public/task/task/setup.deb.sh
@@ -277,10 +293,19 @@
               - unar
               - mise
               - kubectl
-              - terraform
               - mole
               - zoxide
               - gnupg
+            state: present
+
+        - name: Tap official HashiCorp formulae (macOS)
+          community.general.homebrew_tap:
+            name: hashicorp/tap
+            state: present
+
+        - name: Install Terraform from official HashiCorp tap (macOS)
+          community.general.homebrew:
+            name: hashicorp/tap/terraform
             state: present
 
         - name: Install GUI applications via Homebrew Cask (macOS)
