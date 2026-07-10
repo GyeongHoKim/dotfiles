@@ -3,7 +3,12 @@
 
 # .bootstrap/setup.yml hash: {{ include "dot_bootstrap/setup.yml" | sha256sum }}
 
+BECOME_FLAG=""
+if [ -t 0 ]; then
+    BECOME_FLAG="--ask-become-pass"
+fi
+
 if command -v ansible-playbook &> /dev/null; then
-    ansible-playbook {{ joinPath .chezmoi.sourceDir "dot_bootstrap/setup.yml" | quote }} -e dotfiles_profile={{ .dotfiles_profile | default "desktop" }} --ask-become-pass
+    ansible-playbook {{ joinPath .chezmoi.sourceDir "dot_bootstrap/setup.yml" | quote }} -e dotfiles_profile={{ .dotfiles_profile | default "desktop" }} $BECOME_FLAG
 fi
 {{- end -}}

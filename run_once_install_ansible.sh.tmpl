@@ -1,5 +1,6 @@
 {{- if ne .chezmoi.os "windows" -}}
 #!/bin/bash
+set -e
 
 install_on_fedora() {
     sudo dnf install -y ansible
@@ -45,7 +46,12 @@ esac
 # Install required Ansible collections
 ansible-galaxy collection install community.general
 
-ansible-playbook ~/.bootstrap/setup.yml -e dotfiles_profile={{ .dotfiles_profile | default "desktop" }}
+BECOME_FLAG=""
+if [ -t 0 ]; then
+    BECOME_FLAG="--ask-become-pass"
+fi
+
+ansible-playbook ~/.bootstrap/setup.yml -e dotfiles_profile={{ .dotfiles_profile | default "desktop" }} $BECOME_FLAG
 
 echo "Ansible installation complete."
 
