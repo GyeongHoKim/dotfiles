@@ -26,7 +26,7 @@ if (Get-Command mise -ErrorAction SilentlyContinue) {
 
 # Initialize Oh My Posh
 if (Get-Command oh-my-posh -ErrorAction SilentlyContinue) {
-    oh-my-posh init pwsh --config "$env:POSH_THEMES_PATH\paradox.omp.json" | Invoke-Expression
+    oh-my-posh init pwsh --config 'paradox' | Invoke-Expression
 }
 
 # Aliases (matching Linux/macOS setup)
