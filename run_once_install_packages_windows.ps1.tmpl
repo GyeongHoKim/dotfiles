@@ -150,6 +150,51 @@ if ($pythonAvailable) {
     Write-Host "  ! Python not found, skipping Poetry installation" -ForegroundColor Yellow
 }
 
+# Install OpenSSH Server if it's not already present, then configure it to
+# use PowerShell 7 as the default shell for incoming SSH sessions. Without
+# the DefaultShell registry setting, sshd falls back to cmd.exe even though
+# PowerShell 7 is installed, since that's a separate setting unrelated to
+# what's on PATH.
+Write-Host "`nChecking for OpenSSH Server..." -ForegroundColor Cyan
+$sshdService = Get-Service -Name sshd -ErrorAction SilentlyContinue
+if (-not $sshdService) {
+    Write-Host "  OpenSSH Server not found, installing..." -ForegroundColor Cyan
+    try {
+        Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0 | Out-Null
+        Set-Service -Name sshd -StartupType Automatic
+        Start-Service sshd
+        if (-not (Get-NetFirewallRule -Name "OpenSSH-Server-In-TCP" -ErrorAction SilentlyContinue)) {
+            New-NetFirewallRule -Name "OpenSSH-Server-In-TCP" -DisplayName "OpenSSH Server (sshd)" -Enabled True -Direction Inbound -Protocol TCP -Action Allow -LocalPort 22 | Out-Null
+        }
+        $sshdService = Get-Service -Name sshd -ErrorAction SilentlyContinue
+        Write-Host "  ✓ OpenSSH Server installed and started" -ForegroundColor Green
+    }
+    catch {
+        Write-Host "  ✗ Failed to install OpenSSH Server (try running as Administrator)" -ForegroundColor Red
+        Write-Host "    Error: $_" -ForegroundColor Red
+    }
+} else {
+    Write-Host "  OpenSSH Server already installed" -ForegroundColor Green
+}
+
+if ($sshdService) {
+    $pwshCmd = Get-Command pwsh -ErrorAction SilentlyContinue
+    if ($pwshCmd) {
+        try {
+            New-ItemProperty -Path "HKLM:\SOFTWARE\OpenSSH" -Name DefaultShell -Value $pwshCmd.Source -PropertyType String -Force | Out-Null
+            Write-Host "  ✓ OpenSSH default shell set to $($pwshCmd.Source)" -ForegroundColor Green
+        }
+        catch {
+            Write-Host "  ✗ Failed to set OpenSSH default shell (try running as Administrator)" -ForegroundColor Red
+            Write-Host "    Error: $_" -ForegroundColor Red
+        }
+    } else {
+        Write-Host "  ! pwsh not found on PATH, skipping OpenSSH default shell configuration" -ForegroundColor Yellow
+    }
+} else {
+    Write-Host "  ! OpenSSH Server unavailable, skipping default shell configuration" -ForegroundColor Yellow
+}
+
 Write-Host "`n========================================" -ForegroundColor Green
 Write-Host "Package installation complete!" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Green
