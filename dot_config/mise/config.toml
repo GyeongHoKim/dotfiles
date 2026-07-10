@@ -8,6 +8,9 @@
 # Node.js - LTS (Long-term Support) recommended for stability
 node = "lts"
 
+# Bun - Latest stable version
+bun = "latest"
+
 # Python - Latest stable version
 python = "latest"
 

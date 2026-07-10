@@ -474,13 +474,35 @@
         update_cache: yes
       when: ansible_os_family == "Debian"
 
-    - name: Install Bun (Linux/macOS)
+    - name: Check if mise is available (Bun)
+      ansible.builtin.command: which mise
+      register: bun_mise_check
+      ignore_errors: true
+      changed_when: false
+      become: false
+      when: ansible_facts["system"] != "Windows"
+
+    - name: Install Bun via mise (Linux/macOS)
+      ansible.builtin.shell:
+        cmd: |
+          eval "$(mise activate bash)"
+          mise install bun
+      args:
+        executable: /bin/bash
+      when:
+        - ansible_facts["system"] != "Windows"
+        - bun_mise_check.rc == 0
+      become: false
+
+    - name: Install Bun standalone fallback (Linux/macOS, no mise)
       ansible.builtin.shell:
         cmd: curl -fsSL https://bun.sh/install | bash
         creates: ~/.bun/bin/bun
       args:
         executable: /bin/bash
-      when: ansible_facts["system"] != "Windows"
+      when:
+        - ansible_facts["system"] != "Windows"
+        - bun_mise_check.rc != 0
       become: false
 
     - name: Ensure .config directory exists for remote_regular_user

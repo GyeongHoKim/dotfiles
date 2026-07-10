@@ -62,7 +62,6 @@ $commonPackages = @{
     "Pulumi.Pulumi" = "Pulumi"
     "Helm.Helm" = "Helm"
     "GoTask.Task" = "Task"
-    "OpenJS.NodeJS.LTS" = "Node.js LTS"
     "GnuWin32.Make" = "GNU Make"
     "BurntSushi.ripgrep.MSVC" = "ripgrep"
     "charmbracelet.glow" = "glow"
@@ -107,31 +106,30 @@ foreach ($package in $packages.GetEnumerator()) {
     Install-WingetPackage -PackageId $package.Key -Name $package.Value
 }
 
-# Install mise (version manager for Node, Python, Go, Rust)
+# Install mise (version manager for Node, Bun, Python, Go, Rust)
 Write-Host "`n" -ForegroundColor Yellow
 Install-WingetPackage -PackageId "jdx.mise" -Name "mise"
 
-# Install Bun (JavaScript runtime and package manager)
-Write-Host "`n--- Installing Bun ---" -ForegroundColor Cyan
+# Refresh PATH in this session so the winget-installed mise binary is visible
+# without needing to restart the terminal
+$env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + `
+    [System.Environment]::GetEnvironmentVariable("Path", "User")
 
-try {
-    # Check if 'bun' command exists
-    $bunPath = (Get-Command bun -ErrorAction SilentlyContinue).Path
-    if ($bunPath) {
-        Write-Host "  ✓ Bun is already installed at $bunPath" -ForegroundColor Green
+# Install tools declared in mise's config.toml (Node, Bun, Python, Go, Rust).
+# This must run here -- if it's left as a manual step, tools tend to get
+# installed standalone (e.g. via winget or a language's own installer)
+# instead of being managed by mise.
+Write-Host "`n--- Installing mise-managed tools (Node, Bun, Python, Go, Rust) ---" -ForegroundColor Cyan
+$miseCmd = Get-Command mise -ErrorAction SilentlyContinue
+if ($miseCmd) {
+    $miseConfig = Join-Path $env:LOCALAPPDATA "mise\config.toml"
+    if (Test-Path $miseConfig) {
+        & mise install
     } else {
-        Write-Host "  Attempting to install Bun..." -ForegroundColor Cyan
-        powershell -c "irm bun.sh/install.ps1|iex"
-        $bunPath = (Get-Command bun -ErrorAction SilentlyContinue).Path
-        if ($bunPath) {
-            Write-Host "  ✓ Bun installed successfully" -ForegroundColor Green
-        } else {
-            Write-Host "  ✗ Bun installation failed: 'bun' command not found after installation." -ForegroundColor Red
-        }
+        Write-Host "  ! mise config.toml not found at $miseConfig, skipping mise install" -ForegroundColor Yellow
     }
-}
-catch {
-    Write-Host "  ✗ Bun installation failed: $($_.Exception.Message)" -ForegroundColor Red
+} else {
+    Write-Host "  ! mise command not found after installation (restart your terminal and run 'mise install' manually)" -ForegroundColor Yellow
 }
 
 # Install Poetry if Python is available
@@ -160,7 +158,6 @@ Write-Host "Next steps:" -ForegroundColor Yellow
 Write-Host "1. Restart your terminal to load new PATH entries" -ForegroundColor White
 Write-Host "2. Launch Docker Desktop to start the Docker daemon" -ForegroundColor White
 Write-Host "3. Run 'mise doctor' to verify mise installation" -ForegroundColor White
-Write-Host "4. Run 'mise install' to install language runtimes (Node, Python, Go, Rust)" -ForegroundColor White
 
 Write-Host ""
 {{- end }}
