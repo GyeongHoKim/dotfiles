@@ -1,5 +1,8 @@
 # CI: server profile only (`dotfiles_profile=server`). See entrypoint-linux-server.sh.
-FROM ubuntu:24.04
+# UBUNTU_VERSION is driven by the workflow matrix; 26.04+ defaults to sudo-rs,
+# which run_once_install_ansible.sh.tmpl has to switch away from for Ansible become.
+ARG UBUNTU_VERSION=24.04
+FROM ubuntu:${UBUNTU_VERSION}
 
 ENV DEBIAN_FRONTEND=noninteractive
 

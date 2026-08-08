@@ -43,8 +43,35 @@ case "${OS}" in
         ;;
 esac
 
+# Ansible's sudo become plugin matches the prompt it passes via -p against the
+# start of each output line. sudo-rs wraps it as "[sudo: <prompt>] Password:",
+# so the match never succeeds and every become task fails with
+# "Timed out waiting for become success or become password prompt".
+# See https://bugs.launchpad.net/ubuntu/+source/ansible/+bug/2122414
+# Ubuntu 25.10+ ships sudo-rs at a higher alternatives priority than the
+# traditional sudo, so pin sudo.ws in manual mode when it is available.
+switch_off_sudo_rs() {
+    if ! sudo -V 2>/dev/null | head -1 | grep -qi 'sudo-rs'; then
+        return 0
+    fi
+
+    if ! command -v update-alternatives >/dev/null 2>&1 ||
+        ! update-alternatives --list sudo 2>/dev/null | grep -qx '/usr/bin/sudo.ws'; then
+        echo "WARNING: sudo-rs is the default sudo and /usr/bin/sudo.ws is unavailable." >&2
+        echo "WARNING: Ansible become tasks will time out. Install the 'sudo' package first." >&2
+        return 0
+    fi
+
+    echo "Detected sudo-rs; switching the sudo alternative to /usr/bin/sudo.ws for Ansible compatibility."
+    sudo update-alternatives --set sudo /usr/bin/sudo.ws
+}
+
 # Install required Ansible collections
 ansible-galaxy collection install community.general
+
+if [ "${OS}" != "Darwin" ]; then
+    switch_off_sudo_rs
+fi
 
 BECOME_FLAG=""
 if [ -t 0 ]; then

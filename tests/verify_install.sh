@@ -170,6 +170,27 @@ check_mise_tool() {
     fi
 }
 
+# Ansible's become plugin cannot parse sudo-rs password prompts, so the install
+# script pins the traditional sudo. Guard against that pinning regressing.
+check_sudo_not_sudo_rs() {
+    if ! command -v sudo &> /dev/null; then
+        echo -e "${RED}[FAIL]${NC} sudo is not installed"
+        ((FAILED++)) || true
+        return
+    fi
+
+    local version
+    version="$(sudo -V 2>/dev/null | head -1)"
+
+    if [[ "$version" == *sudo-rs* ]]; then
+        echo -e "${RED}[FAIL]${NC} sudo is sudo-rs ($version) - Ansible become will time out"
+        ((FAILED++)) || true
+    else
+        echo -e "${GREEN}[PASS]${NC} sudo is not sudo-rs ($version)"
+        ((PASSED++)) || true
+    fi
+}
+
 # Check Homebrew cask app (macOS)
 check_cask_app() {
     local app_name=$1
@@ -251,6 +272,7 @@ echo "--- OS-Specific Tools ---"
 if [[ "$OS" == "Linux" ]]; then
     check_command_alternatives "inotifywait inotify-wait" "inotify-tools"
     check_command "docker" "Docker"
+    check_sudo_not_sudo_rs
 
     if [[ "$DOTFILES_PROFILE" != "server" ]]; then
         check_command "gnome-tweaks" "GNOME Tweaks"
