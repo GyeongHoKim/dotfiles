@@ -1,0 +1,42 @@
+{{- if ne .chezmoi.os "windows" -}}
+#!/bin/bash
+# Install tmux plugin manager (tpm) and the plugins referenced by .tmux.conf.
+# .tmux.conf sorts before run_once_* in chezmoi's apply order, so the config
+# is already in place when this runs.
+set -u
+
+TPM_DIR="${HOME}/.tmux/plugins/tpm"
+
+if ! command -v tmux &> /dev/null; then
+    echo "tmux not found. Skipping tpm installation."
+    exit 0
+fi
+
+if ! command -v git &> /dev/null; then
+    echo "git not found. Skipping tpm installation."
+    exit 0
+fi
+
+if [ -d "${TPM_DIR}" ]; then
+    echo "tpm already installed at ${TPM_DIR}."
+else
+    echo "Installing tpm..."
+    if ! git clone --depth 1 https://github.com/tmux-plugins/tpm "${TPM_DIR}"; then
+        echo "Error: tpm clone failed. Install manually or run 'prefix + I' later."
+        exit 0
+    fi
+fi
+
+# tpm's installer needs a running tmux server that has sourced .tmux.conf,
+# otherwise TMUX_PLUGIN_MANAGER_PATH is unset and it aborts. Spin up a
+# throwaway detached session for that. Failing here is not fatal: the
+# plugins can always be installed interactively with 'prefix + I'.
+if tmux new-session -d -s __tpm_bootstrap 2> /dev/null; then
+    tmux source-file "${HOME}/.tmux.conf" 2> /dev/null || true
+    "${TPM_DIR}/bin/install_plugins" || echo "Warning: plugin install failed; use 'prefix + I' in tmux."
+    tmux kill-session -t __tpm_bootstrap 2> /dev/null || true
+else
+    echo "Could not start a temporary tmux server; run 'prefix + I' inside tmux to install plugins."
+fi
+
+{{- end -}}

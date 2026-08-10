@@ -45,4 +45,18 @@ if ! pgrep -x -u "${USER}" gpg-agent >/dev/null 2>&1; then
   gpgconf --launch gpg-agent
 fi
 
+# Keep GPG_TTY pointing at the live tty. Shell processes survive a tmux
+# detach/reattach, so a stale GPG_TTY would point at a dead pts and break
+# signed commits ("gpg: signing failed: Inappropriate ioctl for device").
+_refresh_gpg_tty() {
+  local t
+  t=$(tty 2>/dev/null) || return
+  [[ $t == /dev/* ]] || return
+  if [[ $t != "$GPG_TTY" ]]; then
+    export GPG_TTY=$t
+    gpg-connect-agent updatestartuptty /bye >/dev/null 2>&1
+  fi
+}
+autoload -Uz add-zsh-hook && add-zsh-hook precmd _refresh_gpg_tty
+
 eval "$(zoxide init zsh)"
