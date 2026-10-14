@@ -1,7 +1,9 @@
 {{- if eq .chezmoi.os "windows" }}
 # Windows Package Installation Script
 # This script installs development tools using winget (Windows Package Manager)
-# It runs once during initial setup
+# It is a run_onchange_ script, so chezmoi re-runs it whenever its rendered
+# content changes (e.g. a package is added or dotfiles_profile changes).
+# Already-installed packages are skipped, so re-running is cheap.
 
 $ErrorActionPreference = "Stop"
 
@@ -18,21 +20,32 @@ function Test-WingetAvailable {
     }
 }
 
-# Function to install a package with winget
+# Packages that failed to install; reported (and fail the script) at the end
+$failedPackages = @()
+
+# Function to install a package with winget.
+# winget is a native command, so a failed install does not throw -- the
+# result has to be read from $LASTEXITCODE.
 function Install-WingetPackage {
     param(
         [string]$PackageId,
         [string]$Name
     )
 
-    Write-Host "Installing $Name..." -ForegroundColor Cyan
-    try {
-        winget install --id $PackageId --silent --accept-package-agreements --accept-source-agreements
-        Write-Host "  ✓ $Name installed successfully" -ForegroundColor Green
+    winget list --id $PackageId --exact --accept-source-agreements --disable-interactivity | Out-Null
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "  [OK] $Name already installed" -ForegroundColor Green
+        return
     }
-    catch {
-        Write-Host "  ✗ Failed to install $Name" -ForegroundColor Red
-        Write-Host "    Error: $_" -ForegroundColor Red
+
+    Write-Host "Installing $Name..." -ForegroundColor Cyan
+    winget install --id $PackageId --exact --silent --accept-package-agreements --accept-source-agreements --disable-interactivity
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "  [OK] $Name installed successfully" -ForegroundColor Green
+    }
+    else {
+        Write-Host ("  [FAIL] Failed to install $Name (winget exit code 0x{0:X8})" -f $LASTEXITCODE) -ForegroundColor Red
+        $script:failedPackages += $Name
     }
 }
 
@@ -53,10 +66,8 @@ $commonPackages = @{
     "GitHub.cli" = "GitHub CLI"
     "vim.vim" = "Vim"
     "Neovim.Neovim" = "Neovim"
-    "Microsoft.WindowsTerminal" = "Windows Terminal"
     "Microsoft.PowerShell" = "PowerShell 7+"
     "junegunn.fzf" = "fzf"
-    "Docker.DockerDesktop" = "Docker Desktop"
     "Kubernetes.kubectl" = "kubectl"
     "Hashicorp.Terraform" = "Terraform"
     "Pulumi.Pulumi" = "Pulumi"
@@ -74,8 +85,11 @@ $commonPackages = @{
     "GnuPG.Gpg4win" = "Gpg4win (GNU GPG for Windows)"
 }
 
-# Desktop-only: GUI apps, tiling WM, VS Code, WezTerm
+# Desktop-only: GUI apps, tiling WM, VS Code, WezTerm.
+# Docker Desktop is a GUI app and is not supported on Windows Server.
 $desktopPackages = @{
+    "Microsoft.WindowsTerminal" = "Windows Terminal"
+    "Docker.DockerDesktop" = "Docker Desktop"
     "Microsoft.VisualStudioCode" = "Visual Studio Code"
     "wez.wezterm" = "WezTerm"
     "glzr-io.glazewm" = "GlazeWM"
@@ -127,6 +141,10 @@ if ($miseCmd) {
     $miseConfig = Join-Path $env:LOCALAPPDATA "mise\config.toml"
     if (Test-Path $miseConfig) {
         & mise install
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "  [FAIL] mise install exited with code $LASTEXITCODE" -ForegroundColor Red
+            $failedPackages += "mise-managed tools"
+        }
     } else {
         Write-Host "  ! mise config.toml not found at $miseConfig, skipping mise install" -ForegroundColor Yellow
     }
@@ -150,13 +168,13 @@ if (Get-Command mo -ErrorAction SilentlyContinue) {
         Invoke-WebRequest -Uri "https://raw.githubusercontent.com/tw93/Mole/windows/quick-install.ps1" -UseBasicParsing -OutFile $moleInstaller
         & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $moleInstaller
         if ($LASTEXITCODE -eq 0) {
-            Write-Host "  ✓ Mole installed successfully" -ForegroundColor Green
+            Write-Host "  [OK] Mole installed successfully" -ForegroundColor Green
         } else {
-            Write-Host "  ✗ Mole installer exited with code $LASTEXITCODE" -ForegroundColor Red
+            Write-Host "  [FAIL] Mole installer exited with code $LASTEXITCODE" -ForegroundColor Red
         }
     }
     catch {
-        Write-Host "  ✗ Failed to install Mole" -ForegroundColor Red
+        Write-Host "  [FAIL] Failed to install Mole" -ForegroundColor Red
         Write-Host "    Error: $_" -ForegroundColor Red
     }
     finally {
@@ -172,10 +190,10 @@ if ($pythonAvailable) {
     try {
         $poetryInstaller = (Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content
         $poetryInstaller | py -
-        Write-Host "  ✓ Poetry installed successfully" -ForegroundColor Green
+        Write-Host "  [OK] Poetry installed successfully" -ForegroundColor Green
     }
     catch {
-        Write-Host "  ✗ Failed to install Poetry" -ForegroundColor Red
+        Write-Host "  [FAIL] Failed to install Poetry" -ForegroundColor Red
         Write-Host "    Error: $_" -ForegroundColor Red
     }
 } else {
@@ -199,10 +217,10 @@ if (-not $sshdService) {
             New-NetFirewallRule -Name "OpenSSH-Server-In-TCP" -DisplayName "OpenSSH Server (sshd)" -Enabled True -Direction Inbound -Protocol TCP -Action Allow -LocalPort 22 | Out-Null
         }
         $sshdService = Get-Service -Name sshd -ErrorAction SilentlyContinue
-        Write-Host "  ✓ OpenSSH Server installed and started" -ForegroundColor Green
+        Write-Host "  [OK] OpenSSH Server installed and started" -ForegroundColor Green
     }
     catch {
-        Write-Host "  ✗ Failed to install OpenSSH Server (try running as Administrator)" -ForegroundColor Red
+        Write-Host "  [FAIL] Failed to install OpenSSH Server (try running as Administrator)" -ForegroundColor Red
         Write-Host "    Error: $_" -ForegroundColor Red
     }
 } else {
@@ -214,10 +232,10 @@ if ($sshdService) {
     if ($pwshCmd) {
         try {
             New-ItemProperty -Path "HKLM:\SOFTWARE\OpenSSH" -Name DefaultShell -Value $pwshCmd.Source -PropertyType String -Force | Out-Null
-            Write-Host "  ✓ OpenSSH default shell set to $($pwshCmd.Source)" -ForegroundColor Green
+            Write-Host "  [OK] OpenSSH default shell set to $($pwshCmd.Source)" -ForegroundColor Green
         }
         catch {
-            Write-Host "  ✗ Failed to set OpenSSH default shell (try running as Administrator)" -ForegroundColor Red
+            Write-Host "  [FAIL] Failed to set OpenSSH default shell (try running as Administrator)" -ForegroundColor Red
             Write-Host "    Error: $_" -ForegroundColor Red
         }
     } else {
@@ -227,14 +245,23 @@ if ($sshdService) {
     Write-Host "  ! OpenSSH Server unavailable, skipping default shell configuration" -ForegroundColor Yellow
 }
 
+if ($failedPackages.Count -gt 0) {
+    Write-Host "`nThe following packages failed to install:" -ForegroundColor Red
+    $failedPackages | ForEach-Object { Write-Host "  - $_" -ForegroundColor Red }
+    Write-Host "Fix the cause and re-run 'chezmoi apply'; this script runs again until it succeeds." -ForegroundColor Yellow
+    exit 1
+}
+
 Write-Host "`n========================================" -ForegroundColor Green
 Write-Host "Package installation complete!" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Green
 Write-Host ""
 Write-Host "Next steps:" -ForegroundColor Yellow
-Write-Host "1. Restart your terminal to load new PATH entries" -ForegroundColor White
-Write-Host "2. Launch Docker Desktop to start the Docker daemon" -ForegroundColor White
-Write-Host "3. Run 'mise doctor' to verify mise installation" -ForegroundColor White
+Write-Host "- Restart your terminal to load new PATH entries" -ForegroundColor White
+if ($DotfilesProfile -ne "server") {
+    Write-Host "- Launch Docker Desktop to start the Docker daemon" -ForegroundColor White
+}
+Write-Host "- Run 'mise doctor' to verify mise installation" -ForegroundColor White
 
 Write-Host ""
 {{- end }}

@@ -3,6 +3,14 @@
 
 $ErrorActionPreference = "Continue"
 
+# desktop (default) or server -- must match chezmoi data dotfiles_profile
+$DotfilesProfile = if ($env:DOTFILES_PROFILE) { $env:DOTFILES_PROFILE } else { "desktop" }
+
+# winget writes new PATH entries to the registry; pick them up so tools
+# installed earlier in the same session (e.g. a CI job) are visible.
+$env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + `
+    [System.Environment]::GetEnvironmentVariable("Path", "User") + ";" + $env:Path
+
 $script:Passed = 0
 $script:Failed = 0
 $script:Skipped = 0
@@ -113,6 +121,7 @@ function Test-Rust {
 Write-Host "============================================"
 Write-Host "Dotfiles Installation Verification (Windows)"
 Write-Host "============================================"
+Write-Host "Profile: $DotfilesProfile"
 Write-Host ""
 
 # ===== CORE TOOLS =====
@@ -130,7 +139,9 @@ Test-Path-Exists "$env:USERPROFILE\Documents\PowerShell\Microsoft.PowerShell_pro
 Write-Host ""
 Write-Host "--- Editors ---"
 Test-Command "nvim" "Neovim"
-Test-Command "codium" "VSCodium"
+if ($DotfilesProfile -ne "server") {
+    Test-Command "code" "Visual Studio Code"
+}
 Test-Path-Exists "$env:LOCALAPPDATA\nvim" "Neovim config directory"
 
 Write-Host ""
@@ -166,17 +177,29 @@ Write-Host "--- Container & Infrastructure ---"
 Test-CommandOptional "docker" "Docker"
 Test-CommandOptional "kubectl" "kubectl"
 
-# ===== FONTS =====
+# ===== DESKTOP APPS =====
+if ($DotfilesProfile -ne "server") {
+    Write-Host ""
+    Write-Host "--- Desktop Apps ---"
+    Test-Command "wezterm" "WezTerm"
+    Test-Command "wt" "Windows Terminal"
+}
+
+# ===== PROMPT & FONTS =====
 Write-Host ""
-Write-Host "--- Fonts ---"
-$fontPath = "$env:LOCALAPPDATA\Microsoft\Windows\Fonts\JetBrainsMono*"
-$systemFontPath = "C:\Windows\Fonts\JetBrainsMono*"
+Write-Host "--- Prompt & Fonts ---"
+Test-Command "oh-my-posh" "Oh My Posh"
+
+# run_once_install_ohmyposh.ps1 installs Meslo via `oh-my-posh font install`,
+# per-user or system-wide depending on whether it runs elevated.
+$fontPath = "$env:LOCALAPPDATA\Microsoft\Windows\Fonts\Meslo*"
+$systemFontPath = "$env:WINDIR\Fonts\Meslo*"
 
 if ((Get-ChildItem $fontPath -ErrorAction SilentlyContinue) -or
     (Get-ChildItem $systemFontPath -ErrorAction SilentlyContinue)) {
-    Write-Pass "JetBrains Mono Nerd Font"
+    Write-Pass "Meslo Nerd Font"
 } else {
-    Write-Fail "JetBrains Mono Nerd Font"
+    Write-Fail "Meslo Nerd Font"
 }
 
 # ===== SUMMARY =====

@@ -67,3 +67,28 @@ jobs:
           export DOTFILES_PROFILE=server
           chmod +x tests/verify_install.sh
           ./tests/verify_install.sh
+
+  test-windows:
+    # GitHub-hosted x64 Windows runners are Windows Server, so only the
+    # server profile (no GUI winget packages) is exercised here.
+    name: Windows Server (server profile)
+    runs-on: windows-latest
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install chezmoi
+        run: |
+          $dest = Join-Path $env:USERPROFILE "bin"
+          New-Item -ItemType Directory -Path $dest -Force | Out-Null
+          & ([scriptblock]::Create((irm 'https://get.chezmoi.io/ps1'))) -b $dest
+          $dest | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+      - name: Apply dotfiles (server profile)
+        run: |
+          chezmoi init --apply --source $env:GITHUB_WORKSPACE --override-data '{"dotfiles_profile":"server"}'
+      - name: Run verification
+        env:
+          DOTFILES_PROFILE: server
+        run: ./tests/verify_install.ps1
