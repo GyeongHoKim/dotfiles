@@ -140,6 +140,7 @@ Test-Command "fzf" "FZF"
 Test-Command "fd" "fd-find"
 Test-Command "bat" "bat"
 Test-Command "less" "less"
+Test-Command "mo" "Mole"
 Test-Command "glow" "Glow"
 Test-CommandOptional "lazygit" "Lazygit"
 

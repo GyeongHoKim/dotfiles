@@ -134,6 +134,36 @@ if ($miseCmd) {
     Write-Host "  ! mise command not found after installation (restart your terminal and run 'mise install' manually)" -ForegroundColor Yellow
 }
 
+# Install Mole (system cleanup CLI). It has no winget package, so use the
+# official quick-install script, which git-clones the windows branch into
+# %LOCALAPPDATA%\Programs\mole-cli and puts mo/mole on the user PATH.
+# The script is run in a child process because it calls `exit` on failure,
+# which would abort this whole script if run via `iex`.
+Write-Host "`n--- Installing Mole ---" -ForegroundColor Cyan
+if (Get-Command mo -ErrorAction SilentlyContinue) {
+    Write-Host "  Mole already installed (use 'mo update' to upgrade)" -ForegroundColor Green
+} elseif (-not (Get-Command git -ErrorAction SilentlyContinue)) {
+    Write-Host "  ! git not found, skipping Mole installation" -ForegroundColor Yellow
+} else {
+    $moleInstaller = Join-Path $env:TEMP "mole-quick-install.ps1"
+    try {
+        Invoke-WebRequest -Uri "https://raw.githubusercontent.com/tw93/Mole/windows/quick-install.ps1" -UseBasicParsing -OutFile $moleInstaller
+        & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $moleInstaller
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "  ✓ Mole installed successfully" -ForegroundColor Green
+        } else {
+            Write-Host "  ✗ Mole installer exited with code $LASTEXITCODE" -ForegroundColor Red
+        }
+    }
+    catch {
+        Write-Host "  ✗ Failed to install Mole" -ForegroundColor Red
+        Write-Host "    Error: $_" -ForegroundColor Red
+    }
+    finally {
+        Remove-Item $moleInstaller -ErrorAction SilentlyContinue
+    }
+}
+
 # Install Poetry if Python is available
 Write-Host "`nChecking for Python and installing Poetry..." -ForegroundColor Cyan
 $pythonAvailable = Get-Command py -ErrorAction SilentlyContinue
