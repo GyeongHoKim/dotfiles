@@ -68,6 +68,7 @@
           - sqlite
           - autoconf
           - fd-find
+          - bat
           - gcc-c++
           - glow
           - lazygit
@@ -217,6 +218,7 @@
           - libnsl-dev
           - luarocks
           - fd-find
+          - bat
           - g++
           - autoconf
           - libncurses5-dev
@@ -248,6 +250,13 @@
       ansible.builtin.file:
         src: /usr/bin/fdfind
         dest: /usr/local/bin/fd
+        state: link
+      when: ansible_facts["os_family"] == "Debian"
+
+    - name: Create bat symlink (Debian/Ubuntu)
+      ansible.builtin.file:
+        src: /usr/bin/batcat
+        dest: /usr/local/bin/bat
         state: link
       when: ansible_facts["os_family"] == "Debian"
 
@@ -285,6 +294,7 @@
               - gdbm
               - luarocks
               - fd
+              - bat
               - lazygit
               - autoconf
               - ncurses
