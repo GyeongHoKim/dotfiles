@@ -303,6 +303,7 @@ if [[ "$OS" == "Linux" ]]; then
 
 elif [[ "$OS" == "Darwin" ]]; then
     check_command "fswatch" "fswatch"
+    check_command "mo" "Mole"
 
     if [[ "$DOTFILES_PROFILE" != "server" ]]; then
         echo ""
