@@ -3,6 +3,7 @@
 
 # Environment Variables
 $env:EDITOR = "nvim"
+$env:BAT_THEME = "ansi"                             # bat follows the terminal's own palette
 
 # Add custom paths to PATH
 $pathsToAdd = @(
