@@ -167,7 +167,7 @@ case "${1:-parallel}" in
         echo ""
         echo "The CI workflow runs on macos-latest runner and:"
         echo "  1. Installs chezmoi"
-        echo "  2. Applies dotfiles"
+        echo "  2. Applies dotfiles with the server profile"
         echo "  3. Runs tests/verify_install.sh"
         ;;
     windows)
@@ -176,7 +176,7 @@ case "${1:-parallel}" in
         echo ""
         echo "The CI workflow runs on windows-latest runner and:"
         echo "  1. Installs chezmoi via PowerShell"
-        echo "  2. Applies dotfiles"
+        echo "  2. Applies dotfiles with the server profile"
         echo "  3. Runs tests/verify_install.ps1"
         ;;
     all)

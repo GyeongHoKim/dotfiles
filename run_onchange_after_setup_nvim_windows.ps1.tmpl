@@ -35,11 +35,11 @@ if (-not (Test-Path $targetParent)) {
 Write-Host "  Moving nvim config from $sourceConfigPath to $targetConfigPath" -ForegroundColor Cyan
 try {
     Move-Item -Path $sourceConfigPath -Destination $targetConfigPath -Force
-    Write-Host "  ✓ Neovim configuration moved successfully" -ForegroundColor Green
+    Write-Host "  [OK] Neovim configuration moved successfully" -ForegroundColor Green
     Write-Host "  Location: $targetConfigPath" -ForegroundColor White
 }
 catch {
-    Write-Host "  ✗ Failed to move nvim config" -ForegroundColor Red
+    Write-Host "  [FAIL] Failed to move nvim config" -ForegroundColor Red
     Write-Host "    Error: $_" -ForegroundColor Red
     exit 1
 }
