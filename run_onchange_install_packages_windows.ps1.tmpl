@@ -23,9 +23,13 @@ function Test-WingetAvailable {
 # Packages that failed to install; reported (and fail the script) at the end
 $failedPackages = @()
 
+# Some installers ignore --silent and wait for input that never comes
+# (e.g. Gpg4win on Windows Server), so give each install a deadline.
+$wingetInstallTimeoutMinutes = 15
+
 # Function to install a package with winget.
 # winget is a native command, so a failed install does not throw -- the
-# result has to be read from $LASTEXITCODE.
+# result has to be read from its exit code.
 function Install-WingetPackage {
     param(
         [string]$PackageId,
@@ -39,12 +43,22 @@ function Install-WingetPackage {
     }
 
     Write-Host "Installing $Name..." -ForegroundColor Cyan
-    winget install --id $PackageId --exact --silent --accept-package-agreements --accept-source-agreements --disable-interactivity
-    if ($LASTEXITCODE -eq 0) {
+    $wingetArgs = @("install", "--id", $PackageId, "--exact", "--silent",
+        "--accept-package-agreements", "--accept-source-agreements", "--disable-interactivity")
+    $proc = Start-Process -FilePath "winget" -ArgumentList $wingetArgs -NoNewWindow -PassThru
+    # Touch Handle so ExitCode is still readable after exit on Windows PowerShell 5.1
+    $null = $proc.Handle
+    if (-not $proc.WaitForExit($wingetInstallTimeoutMinutes * 60 * 1000)) {
+        # Kill the whole tree: the hung process is the installer winget spawned
+        & taskkill.exe /T /F /PID $proc.Id | Out-Null
+        Write-Host "  [FAIL] $Name did not finish within $wingetInstallTimeoutMinutes minutes" -ForegroundColor Red
+        $script:failedPackages += $Name
+    }
+    elseif ($proc.ExitCode -eq 0) {
         Write-Host "  [OK] $Name installed successfully" -ForegroundColor Green
     }
     else {
-        Write-Host ("  [FAIL] Failed to install $Name (winget exit code 0x{0:X8})" -f $LASTEXITCODE) -ForegroundColor Red
+        Write-Host ("  [FAIL] Failed to install $Name (winget exit code 0x{0:X8})" -f $proc.ExitCode) -ForegroundColor Red
         $script:failedPackages += $Name
     }
 }
@@ -72,22 +86,24 @@ $commonPackages = @{
     "Hashicorp.Terraform" = "Terraform"
     "Pulumi.Pulumi" = "Pulumi"
     "Helm.Helm" = "Helm"
-    "GoTask.Task" = "Task"
+    "Task.Task" = "Task"
     "GnuWin32.Make" = "GNU Make"
     "BurntSushi.ripgrep.MSVC" = "ripgrep"
     "charmbracelet.glow" = "glow"
     "sharkdp.fd" = "fd"
     "sharkdp.bat" = "bat"
     "jftuga.less" = "less (pager for bat)"
-    "tmux.tmux" = "tmux"
     "ajeetdsouza.zoxide" = "zoxide"
     "JesseDuffield.lazygit" = "lazygit"
-    "GnuPG.Gpg4win" = "Gpg4win (GNU GPG for Windows)"
+    "GnuPG.GnuPG" = "GnuPG"
 }
 
 # Desktop-only: GUI apps, tiling WM, VS Code, WezTerm.
 # Docker Desktop is a GUI app and is not supported on Windows Server.
+# Gpg4win bundles GnuPG with the Kleopatra GUI; its installer hangs on
+# Windows Server, so the server profile gets plain GnuPG instead.
 $desktopPackages = @{
+    "GnuPG.Gpg4win" = "Gpg4win (GnuPG + Kleopatra)"
     "Microsoft.WindowsTerminal" = "Windows Terminal"
     "Docker.DockerDesktop" = "Docker Desktop"
     "Microsoft.VisualStudioCode" = "Visual Studio Code"
@@ -107,6 +123,7 @@ foreach ($entry in $commonPackages.GetEnumerator()) {
     $packages[$entry.Key] = $entry.Value
 }
 if ($DotfilesProfile -ne "server") {
+    $packages.Remove("GnuPG.GnuPG")
     foreach ($entry in $desktopPackages.GetEnumerator()) {
         $packages[$entry.Key] = $entry.Value
     }

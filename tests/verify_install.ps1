@@ -153,6 +153,8 @@ Test-Command "bat" "bat"
 Test-Command "less" "less"
 Test-Command "mo" "Mole"
 Test-Command "glow" "Glow"
+Test-Command "task" "Task"
+Test-Command "gpg" "GnuPG"
 Test-CommandOptional "lazygit" "Lazygit"
 
 Write-Host ""
@@ -191,12 +193,12 @@ Write-Host "--- Prompt & Fonts ---"
 Test-Command "oh-my-posh" "Oh My Posh"
 
 # run_once_install_ohmyposh.ps1 installs Meslo via `oh-my-posh font install`,
-# per-user or system-wide depending on whether it runs elevated.
-$fontPath = "$env:LOCALAPPDATA\Microsoft\Windows\Fonts\Meslo*"
-$systemFontPath = "$env:WINDIR\Fonts\Meslo*"
+# per-user or system-wide depending on whether it runs elevated. Newer
+# oh-my-posh versions put the files in an "Oh My Posh" subfolder.
+$fontRoots = @("$env:LOCALAPPDATA\Microsoft\Windows\Fonts", "$env:WINDIR\Fonts")
+$mesloFonts = Get-ChildItem -Path $fontRoots -Filter "Meslo*" -Recurse -File -ErrorAction SilentlyContinue
 
-if ((Get-ChildItem $fontPath -ErrorAction SilentlyContinue) -or
-    (Get-ChildItem $systemFontPath -ErrorAction SilentlyContinue)) {
+if ($mesloFonts) {
     Write-Pass "Meslo Nerd Font"
 } else {
     Write-Fail "Meslo Nerd Font"

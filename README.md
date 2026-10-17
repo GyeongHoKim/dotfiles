@@ -148,7 +148,7 @@ Versions for language runtimes are **“latest” / LTS** at install time (see `
 
 **macOS:** Homebrew formulae (git, mise, kubectl, terraform, fswatch, etc.), Homebrew Casks (VSCodium, Brave, Blender, OBS, VLC, Obsidian, GIMP, Insomnia, Meld, DB Browser for SQLite, WezTerm), Docker Desktop (DMG when not in CI), Rosetta 2 on Apple Silicon when applicable.
 
-**Windows:** winget installs Git, gh, Vim, Neovim, Visual Studio Code, Windows Terminal, WezTerm, PowerShell 7+, fzf, GlazeWM, Zebar, Docker Desktop, kubectl, Terraform, Pulumi, Helm, Task, Node LTS, GNU Make, ripgrep, glow, fd, tmux, zoxide, lazygit, Gpg4win, Brave, Obsidian, GIMP, VLC, OBS, Insomnia, mise, Bun (script), and Poetry when `py` is available. With the server profile, the GUI apps (VS Code, Windows Terminal, WezTerm, GlazeWM, Zebar, Docker Desktop, Brave, Obsidian, GIMP, VLC, OBS, Insomnia) are skipped.
+**Windows:** winget installs Git, gh, Vim, Neovim, Visual Studio Code, Windows Terminal, WezTerm, PowerShell 7+, fzf, GlazeWM, Zebar, Docker Desktop, kubectl, Terraform, Pulumi, Helm, Task, Node LTS, GNU Make, ripgrep, glow, fd, zoxide, lazygit, Gpg4win (plain GnuPG on server), Brave, Obsidian, GIMP, VLC, OBS, Insomnia, mise, Bun (script), and Poetry when `py` is available. With the server profile, the GUI apps (VS Code, Windows Terminal, WezTerm, GlazeWM, Zebar, Docker Desktop, Brave, Obsidian, GIMP, VLC, OBS, Insomnia) are skipped.
 
 ---
 
