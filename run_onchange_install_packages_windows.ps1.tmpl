@@ -24,41 +24,74 @@ function Test-WingetAvailable {
 $failedPackages = @()
 
 # Some installers ignore --silent and wait for input that never comes
-# (e.g. Gpg4win on Windows Server), so give each install a deadline.
+# (e.g. Gpg4win on Windows Server), and `winget list` can freeze too, so
+# every winget call gets a deadline.
+$wingetListTimeoutMinutes = 2
 $wingetInstallTimeoutMinutes = 15
 
-# Function to install a package with winget.
-# winget is a native command, so a failed install does not throw -- the
-# result has to be read from its exit code.
+# Run winget with a deadline. Returns its exit code, or $null after killing
+# the process tree on timeout (the hung process is often a child installer).
+# winget is a native command, so failures do not throw -- read the result.
+function Invoke-WingetWithTimeout {
+    param(
+        [string[]]$Arguments,
+        [int]$TimeoutMinutes,
+        [switch]$Quiet
+    )
+
+    $startArgs = @{ FilePath = "winget"; ArgumentList = $Arguments; NoNewWindow = $true; PassThru = $true }
+    if ($Quiet) {
+        $startArgs.RedirectStandardOutput = [System.IO.Path]::GetTempFileName()
+    }
+    $proc = Start-Process @startArgs
+    # Touch Handle so ExitCode is still readable after exit on Windows PowerShell 5.1
+    $null = $proc.Handle
+    try {
+        if (-not $proc.WaitForExit($TimeoutMinutes * 60 * 1000)) {
+            & taskkill.exe /T /F /PID $proc.Id | Out-Null
+            return $null
+        }
+        return $proc.ExitCode
+    }
+    finally {
+        if ($Quiet) {
+            Remove-Item $startArgs.RedirectStandardOutput -ErrorAction SilentlyContinue
+        }
+    }
+}
+
+# Function to install a package with winget
 function Install-WingetPackage {
     param(
         [string]$PackageId,
         [string]$Name
     )
 
-    winget list --id $PackageId --exact --accept-source-agreements --disable-interactivity | Out-Null
-    if ($LASTEXITCODE -eq 0) {
+    $listArgs = @("list", "--id", $PackageId, "--exact", "--accept-source-agreements", "--disable-interactivity")
+    $listExit = Invoke-WingetWithTimeout -Arguments $listArgs -TimeoutMinutes $wingetListTimeoutMinutes -Quiet
+    if ($null -eq $listExit) {
+        Write-Host "  [FAIL] Checking $Name did not finish within $wingetListTimeoutMinutes minutes" -ForegroundColor Red
+        $script:failedPackages += $Name
+        return
+    }
+    if ($listExit -eq 0) {
         Write-Host "  [OK] $Name already installed" -ForegroundColor Green
         return
     }
 
     Write-Host "Installing $Name..." -ForegroundColor Cyan
-    $wingetArgs = @("install", "--id", $PackageId, "--exact", "--silent",
+    $installArgs = @("install", "--id", $PackageId, "--exact", "--silent",
         "--accept-package-agreements", "--accept-source-agreements", "--disable-interactivity")
-    $proc = Start-Process -FilePath "winget" -ArgumentList $wingetArgs -NoNewWindow -PassThru
-    # Touch Handle so ExitCode is still readable after exit on Windows PowerShell 5.1
-    $null = $proc.Handle
-    if (-not $proc.WaitForExit($wingetInstallTimeoutMinutes * 60 * 1000)) {
-        # Kill the whole tree: the hung process is the installer winget spawned
-        & taskkill.exe /T /F /PID $proc.Id | Out-Null
+    $installExit = Invoke-WingetWithTimeout -Arguments $installArgs -TimeoutMinutes $wingetInstallTimeoutMinutes
+    if ($null -eq $installExit) {
         Write-Host "  [FAIL] $Name did not finish within $wingetInstallTimeoutMinutes minutes" -ForegroundColor Red
         $script:failedPackages += $Name
     }
-    elseif ($proc.ExitCode -eq 0) {
+    elseif ($installExit -eq 0) {
         Write-Host "  [OK] $Name installed successfully" -ForegroundColor Green
     }
     else {
-        Write-Host ("  [FAIL] Failed to install $Name (winget exit code 0x{0:X8})" -f $proc.ExitCode) -ForegroundColor Red
+        Write-Host ("  [FAIL] Failed to install $Name (winget exit code 0x{0:X8})" -f $installExit) -ForegroundColor Red
         $script:failedPackages += $Name
     }
 }
