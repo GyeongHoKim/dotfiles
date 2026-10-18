@@ -1,0 +1,2 @@
+{{- /* Gpg4win reads %APPDATA%\gnupg, not ~/.gnupg; reuse the shared config. */ -}}
+{{ include "dot_gnupg/gpg-agent.conf" }}
