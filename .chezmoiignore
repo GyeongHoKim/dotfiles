@@ -6,13 +6,16 @@ tests/
 
 # Platform-specific ignores
 {{- if eq .chezmoi.os "windows" }}
-# Ignore Linux/macOS files on Windows
-run_once_install_ansible.sh
-run_once_install_ohmyzsh.sh
-run_once_rustup.sh
-run_once_after_install_mise_tools.sh.tmpl
-run_onchange_bootstrap.sh.tmpl
-run_onchange_reload_gnome-terminal-profiles.sh.tmpl
+# Ignore Linux/macOS files on Windows.
+# Patterns match target names, not source names: run_once_foo.sh.tmpl -> foo.sh
+install_ansible.sh
+install_mise_tools.sh
+install_ohmyzsh.sh
+install_tpm.sh
+rustup.sh
+bootstrap.sh
+reload_gnome-terminal-profiles.sh
+reload_gpg-agent.sh
 .bootstrap/
 .zshrc
 .bashrc
@@ -22,12 +25,12 @@ run_onchange_reload_gnome-terminal-profiles.sh.tmpl
 .config/*
 !.config/mise
   {{- else }}
-  # Ignore Windows files on Linux/macOS
-  run_onchange_install_packages_windows.ps1.tmpl
-  run_once_install_ohmyposh.ps1.tmpl
-  run_onchange_after_setup_nvim_windows.ps1.tmpl
+  # Ignore Windows files on Linux/macOS (target names, as above)
+  install_packages_windows.ps1
+  install_ohmyposh.ps1
+  setup_nvim_windows.ps1
   reload_gpg-agent_windows.ps1
   Documents/PowerShell/
   AppData/
-  dot_glzr/
+  .glzr/
   {{- end }}
