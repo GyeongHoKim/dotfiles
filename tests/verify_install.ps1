@@ -82,39 +82,18 @@ function Test-MiseTool {
 
     $mise = Get-Command "mise" -ErrorAction SilentlyContinue
     if (-not $mise) {
-        Write-Skip "$Description - mise not available"
+        Write-Fail "$Description - mise not available"
         return
     }
 
-    $miseList = & mise list 2>$null
-    if ($miseList -match $Tool) {
-        Write-Pass "$Description (mise: $Tool)"
-    } elseif (Get-Command $Tool -ErrorAction SilentlyContinue) {
-        Write-Pass "$Description ($Tool via PATH)"
+    # `mise where` succeeds only if mise read the config and installed the
+    # configured version. No PATH fallback: CI runners ship their own
+    # runtimes, which would mask a broken mise setup.
+    $installPath = & mise where $Tool 2>$null
+    if ($LASTEXITCODE -eq 0 -and $installPath) {
+        Write-Pass "$Description (mise: $installPath)"
     } else {
-        Write-Fail "$Description ($Tool)"
-    }
-}
-
-function Test-Rust {
-    $rustcPath = "$env:USERPROFILE\.cargo\bin\rustc.exe"
-    $cargoPath = "$env:USERPROFILE\.cargo\bin\cargo.exe"
-
-    if ((Test-Path $rustcPath) -or (Get-Command "rustc" -ErrorAction SilentlyContinue)) {
-        try {
-            $version = & rustc --version 2>$null
-            Write-Pass "Rust compiler ($version)"
-        } catch {
-            Write-Pass "Rust compiler (rustc)"
-        }
-    } else {
-        Write-Fail "Rust compiler (rustc)"
-    }
-
-    if ((Test-Path $cargoPath) -or (Get-Command "cargo" -ErrorAction SilentlyContinue)) {
-        Write-Pass "Cargo package manager"
-    } else {
-        Write-Fail "Cargo package manager"
+        Write-Fail "$Description ($Tool not installed by mise)"
     }
 }
 
@@ -169,14 +148,11 @@ Test-CommandOptional "make" "Make"
 
 # ===== LANGUAGE RUNTIMES =====
 Write-Host ""
-Write-Host "--- Rust Toolchain ---"
-Test-Rust
-
-Write-Host ""
 Write-Host "--- Language Runtimes (via mise) ---"
 Test-MiseTool "node" "Node.js"
 Test-MiseTool "python" "Python"
 Test-MiseTool "go" "Go"
+Test-MiseTool "rust" "Rust"
 
 # ===== INFRASTRUCTURE =====
 Write-Host ""
