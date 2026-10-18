@@ -3,6 +3,14 @@
 
 $ErrorActionPreference = "Continue"
 
+# desktop (default) or server -- must match chezmoi data dotfiles_profile
+$DotfilesProfile = if ($env:DOTFILES_PROFILE) { $env:DOTFILES_PROFILE } else { "desktop" }
+
+# winget writes new PATH entries to the registry; pick them up so tools
+# installed earlier in the same session (e.g. a CI job) are visible.
+$env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + `
+    [System.Environment]::GetEnvironmentVariable("Path", "User") + ";" + $env:Path
+
 $script:Passed = 0
 $script:Failed = 0
 $script:Skipped = 0
@@ -74,45 +82,25 @@ function Test-MiseTool {
 
     $mise = Get-Command "mise" -ErrorAction SilentlyContinue
     if (-not $mise) {
-        Write-Skip "$Description - mise not available"
+        Write-Fail "$Description - mise not available"
         return
     }
 
-    $miseList = & mise list 2>$null
-    if ($miseList -match $Tool) {
-        Write-Pass "$Description (mise: $Tool)"
-    } elseif (Get-Command $Tool -ErrorAction SilentlyContinue) {
-        Write-Pass "$Description ($Tool via PATH)"
+    # `mise where` succeeds only if mise read the config and installed the
+    # configured version. No PATH fallback: CI runners ship their own
+    # runtimes, which would mask a broken mise setup.
+    $installPath = & mise where $Tool 2>$null
+    if ($LASTEXITCODE -eq 0 -and $installPath) {
+        Write-Pass "$Description (mise: $installPath)"
     } else {
-        Write-Fail "$Description ($Tool)"
-    }
-}
-
-function Test-Rust {
-    $rustcPath = "$env:USERPROFILE\.cargo\bin\rustc.exe"
-    $cargoPath = "$env:USERPROFILE\.cargo\bin\cargo.exe"
-
-    if ((Test-Path $rustcPath) -or (Get-Command "rustc" -ErrorAction SilentlyContinue)) {
-        try {
-            $version = & rustc --version 2>$null
-            Write-Pass "Rust compiler ($version)"
-        } catch {
-            Write-Pass "Rust compiler (rustc)"
-        }
-    } else {
-        Write-Fail "Rust compiler (rustc)"
-    }
-
-    if ((Test-Path $cargoPath) -or (Get-Command "cargo" -ErrorAction SilentlyContinue)) {
-        Write-Pass "Cargo package manager"
-    } else {
-        Write-Fail "Cargo package manager"
+        Write-Fail "$Description ($Tool not installed by mise)"
     }
 }
 
 Write-Host "============================================"
 Write-Host "Dotfiles Installation Verification (Windows)"
 Write-Host "============================================"
+Write-Host "Profile: $DotfilesProfile"
 Write-Host ""
 
 # ===== CORE TOOLS =====
@@ -130,7 +118,15 @@ Test-Path-Exists "$env:USERPROFILE\Documents\PowerShell\Microsoft.PowerShell_pro
 Write-Host ""
 Write-Host "--- Editors ---"
 Test-Command "nvim" "Neovim"
-Test-Command "codium" "VSCodium"
+if ($DotfilesProfile -ne "server") {
+    Test-Command "code" "Visual Studio Code"
+}
+
+if ($DotfilesProfile -ne "server") {
+    Write-Host ""
+    Write-Host "--- GnuPG ---"
+    Test-Command "gpg" "GnuPG (Gpg4win)"
+}
 Test-Path-Exists "$env:LOCALAPPDATA\nvim" "Neovim config directory"
 
 Write-Host ""
@@ -142,6 +138,7 @@ Test-Command "bat" "bat"
 Test-Command "less" "less"
 Test-Command "mo" "Mole"
 Test-Command "glow" "Glow"
+Test-Command "task" "Task"
 Test-CommandOptional "lazygit" "Lazygit"
 
 Write-Host ""
@@ -151,14 +148,11 @@ Test-CommandOptional "make" "Make"
 
 # ===== LANGUAGE RUNTIMES =====
 Write-Host ""
-Write-Host "--- Rust Toolchain ---"
-Test-Rust
-
-Write-Host ""
 Write-Host "--- Language Runtimes (via mise) ---"
 Test-MiseTool "node" "Node.js"
 Test-MiseTool "python" "Python"
 Test-MiseTool "go" "Go"
+Test-MiseTool "rust" "Rust"
 
 # ===== INFRASTRUCTURE =====
 Write-Host ""
@@ -166,17 +160,29 @@ Write-Host "--- Container & Infrastructure ---"
 Test-CommandOptional "docker" "Docker"
 Test-CommandOptional "kubectl" "kubectl"
 
-# ===== FONTS =====
-Write-Host ""
-Write-Host "--- Fonts ---"
-$fontPath = "$env:LOCALAPPDATA\Microsoft\Windows\Fonts\JetBrainsMono*"
-$systemFontPath = "C:\Windows\Fonts\JetBrainsMono*"
+# ===== DESKTOP APPS =====
+if ($DotfilesProfile -ne "server") {
+    Write-Host ""
+    Write-Host "--- Desktop Apps ---"
+    Test-Command "wezterm" "WezTerm"
+    Test-Command "wt" "Windows Terminal"
+}
 
-if ((Get-ChildItem $fontPath -ErrorAction SilentlyContinue) -or
-    (Get-ChildItem $systemFontPath -ErrorAction SilentlyContinue)) {
-    Write-Pass "JetBrains Mono Nerd Font"
+# ===== PROMPT & FONTS =====
+Write-Host ""
+Write-Host "--- Prompt & Fonts ---"
+Test-Command "oh-my-posh" "Oh My Posh"
+
+# run_once_install_ohmyposh.ps1 installs Meslo via `oh-my-posh font install`,
+# per-user or system-wide depending on whether it runs elevated. Newer
+# oh-my-posh versions put the files in an "Oh My Posh" subfolder.
+$fontRoots = @("$env:LOCALAPPDATA\Microsoft\Windows\Fonts", "$env:WINDIR\Fonts")
+$mesloFonts = Get-ChildItem -Path $fontRoots -Filter "Meslo*" -Recurse -File -ErrorAction SilentlyContinue
+
+if ($mesloFonts) {
+    Write-Pass "Meslo Nerd Font"
 } else {
-    Write-Fail "JetBrains Mono Nerd Font"
+    Write-Fail "Meslo Nerd Font"
 }
 
 # ===== SUMMARY =====

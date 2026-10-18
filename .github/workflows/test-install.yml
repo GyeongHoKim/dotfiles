@@ -11,13 +11,16 @@ on:
     - cron: '0 0 * * 0'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   test-fedora:
     name: Fedora (server profile)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
       - run: |
           docker build -f tests/docker/Dockerfile.fedora -t dotfiles-test-fedora .
           docker run --rm dotfiles-test-fedora
@@ -32,8 +35,8 @@ jobs:
         # Ansible become incompatibility cannot regress unnoticed.
         ubuntu_version: ['24.04', '26.04']
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
       - run: |
           docker build -f tests/docker/Dockerfile.ubuntu \
             --build-arg UBUNTU_VERSION=${{ matrix.ubuntu_version }} \
@@ -44,8 +47,8 @@ jobs:
     name: Debian (server profile)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
       - run: |
           docker build -f tests/docker/Dockerfile.debian -t dotfiles-test-debian .
           docker run --rm dotfiles-test-debian
@@ -54,7 +57,7 @@ jobs:
     name: macOS (server profile)
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install chezmoi and apply dotfiles (server profile)
         run: |
           mkdir -p "$HOME/.local/bin"
@@ -67,3 +70,31 @@ jobs:
           export DOTFILES_PROFILE=server
           chmod +x tests/verify_install.sh
           ./tests/verify_install.sh
+
+  test-windows:
+    # GitHub-hosted x64 Windows runners are Windows Server, so only the
+    # server profile (no GUI winget packages) is exercised here.
+    name: Windows Server (server profile)
+    runs-on: windows-latest
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Install chezmoi
+        run: |
+          $dest = Join-Path $env:USERPROFILE "bin"
+          New-Item -ItemType Directory -Path $dest -Force | Out-Null
+          & ([scriptblock]::Create((irm 'https://get.chezmoi.io/ps1'))) -b $dest
+          $dest | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+      - name: Apply dotfiles (server profile)
+        timeout-minutes: 60
+        run: |
+          chezmoi init --apply --source $env:GITHUB_WORKSPACE --override-data '{"dotfiles_profile":"server"}'
+      - name: Run verification
+        env:
+          DOTFILES_PROFILE: server
+        run: ./tests/verify_install.ps1

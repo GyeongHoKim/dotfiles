@@ -8,7 +8,7 @@ Supported platforms: **Fedora**, **Debian/Ubuntu**, **macOS**, and **Windows 11*
 
 ## Continuous integration
 
-[`.github/workflows/test-install.yml`](.github/workflows/test-install.yml) exercises **only the server profile** (`dotfiles_profile=server`), matching headless GitHub-hosted runners: **Fedora**, **Ubuntu**, and **Debian** via Docker, plus **macOS** on `macos-latest`. Each job runs `tests/verify_install.sh` with `DOTFILES_PROFILE=server`. Desktop/GUI installs are not tested in CI. Windows is not covered by this workflow.
+[`.github/workflows/test-install.yml`](.github/workflows/test-install.yml) exercises **only the server profile** (`dotfiles_profile=server`), matching headless GitHub-hosted runners: **Fedora**, **Ubuntu**, and **Debian** via Docker, plus **macOS** on `macos-latest` and **Windows Server** on `windows-latest`. Each job runs `tests/verify_install.sh` (or `tests/verify_install.ps1` on Windows) with `DOTFILES_PROFILE=server`. Desktop/GUI installs are not tested in CI; GitHub-hosted x64 Windows runners are Windows Server, so the Windows 11 desktop packages are not covered.
 
 ## Quick install
 
@@ -148,7 +148,7 @@ Versions for language runtimes are **“latest” / LTS** at install time (see `
 
 **macOS:** Homebrew formulae (git, mise, kubectl, terraform, fswatch, etc.), Homebrew Casks (VSCodium, Brave, Blender, OBS, VLC, Obsidian, GIMP, Insomnia, Meld, DB Browser for SQLite, WezTerm), Docker Desktop (DMG when not in CI), Rosetta 2 on Apple Silicon when applicable.
 
-**Windows:** winget installs Git, gh, Vim, Neovim, Visual Studio Code, Windows Terminal, WezTerm, PowerShell 7+, fzf, GlazeWM, Zebar, Docker Desktop, kubectl, Terraform, Pulumi, Helm, Task, Node LTS, GNU Make, ripgrep, glow, fd, tmux, zoxide, lazygit, Gpg4win, Brave, Obsidian, GIMP, VLC, OBS, Insomnia, mise, Bun (script), and Poetry when `py` is available (Windows is not in CI).
+**Windows:** winget installs Git, gh, Vim, Neovim, Visual Studio Code, Windows Terminal, WezTerm, PowerShell 7+, fzf, GlazeWM, Zebar, Docker Desktop, kubectl, Terraform, Pulumi, Helm, Task, Node LTS, GNU Make, ripgrep, glow, fd, zoxide, lazygit, Gpg4win, Brave, Obsidian, GIMP, VLC, OBS, Insomnia, mise, Bun (script), and Poetry when `py` is available. With the server profile, the GUI apps (VS Code, Windows Terminal, WezTerm, GlazeWM, Zebar, Docker Desktop, Gpg4win, Brave, Obsidian, GIMP, VLC, OBS, Insomnia) are skipped.
 
 ---
 

@@ -1,0 +1,7 @@
+{{- if eq .chezmoi.os "windows" }}
+# When gpg-agent.conf changes, restart gpg-agent so new settings take effect.
+# Hash: {{ include "dot_gnupg/gpg-agent.conf" | sha256sum }}
+if (Get-Command gpgconf -ErrorAction SilentlyContinue) {
+    & gpgconf --kill gpg-agent 2>$null
+}
+{{- end }}

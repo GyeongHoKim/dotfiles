@@ -157,15 +157,15 @@ check_mise_tool() {
         eval "$(mise activate bash 2>/dev/null)" || true
     fi
 
-    # Check if tool is installed via mise
-    if mise list 2>/dev/null | grep -q "$tool"; then
-        echo -e "${GREEN}[PASS]${NC} $description (mise: $tool)"
-        ((PASSED++)) || true
-    elif command -v "$tool" &> /dev/null; then
-        echo -e "${GREEN}[PASS]${NC} $description ($tool via PATH)"
+    # `mise where` succeeds only if mise read the config and installed the
+    # configured version. No PATH fallback: CI runners ship their own
+    # runtimes, which would mask a broken mise setup.
+    local install_path
+    if install_path=$(mise where "$tool" 2>/dev/null) && [[ -n "$install_path" ]]; then
+        echo -e "${GREEN}[PASS]${NC} $description (mise: $install_path)"
         ((PASSED++)) || true
     else
-        echo -e "${RED}[FAIL]${NC} $description ($tool)"
+        echo -e "${RED}[FAIL]${NC} $description ($tool not installed by mise)"
         ((FAILED++)) || true
     fi
 }
