@@ -18,7 +18,9 @@ run_onchange_reload_gnome-terminal-profiles.sh.tmpl
 .bashrc
 .profile
 .tmux.conf
-.config/
+# mise reads %USERPROFILE%\.config\mise on Windows too; skip the rest of .config
+.config/*
+!.config/mise
   {{- else }}
   # Ignore Windows files on Linux/macOS
   run_onchange_install_packages_windows.ps1.tmpl

@@ -153,7 +153,7 @@ $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";
 Write-Host "`n--- Installing mise-managed tools (Node, Bun, Python, Go, Rust) ---" -ForegroundColor Cyan
 $miseCmd = Get-Command mise -ErrorAction SilentlyContinue
 if ($miseCmd) {
-    $miseConfig = Join-Path $env:LOCALAPPDATA "mise\config.toml"
+    $miseConfig = Join-Path $env:USERPROFILE ".config\mise\config.toml"
     if (Test-Path $miseConfig) {
         & mise install
         if ($LASTEXITCODE -ne 0) {
