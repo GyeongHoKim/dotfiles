@@ -95,13 +95,12 @@ $commonPackages = @{
     "jftuga.less" = "less (pager for bat)"
     "ajeetdsouza.zoxide" = "zoxide"
     "JesseDuffield.lazygit" = "lazygit"
-    "GnuPG.GnuPG" = "GnuPG"
 }
 
 # Desktop-only: GUI apps, tiling WM, VS Code, WezTerm.
 # Docker Desktop is a GUI app and is not supported on Windows Server.
-# Gpg4win bundles GnuPG with the Kleopatra GUI; its installer hangs on
-# Windows Server, so the server profile gets plain GnuPG instead.
+# GnuPG installers (Gpg4win and plain GnuPG) hang on Windows Server, so
+# the server profile does not install GnuPG at all.
 $desktopPackages = @{
     "GnuPG.Gpg4win" = "Gpg4win (GnuPG + Kleopatra)"
     "Microsoft.WindowsTerminal" = "Windows Terminal"
@@ -123,7 +122,6 @@ foreach ($entry in $commonPackages.GetEnumerator()) {
     $packages[$entry.Key] = $entry.Value
 }
 if ($DotfilesProfile -ne "server") {
-    $packages.Remove("GnuPG.GnuPG")
     foreach ($entry in $desktopPackages.GetEnumerator()) {
         $packages[$entry.Key] = $entry.Value
     }

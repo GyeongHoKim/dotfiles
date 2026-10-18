@@ -142,6 +142,12 @@ Test-Command "nvim" "Neovim"
 if ($DotfilesProfile -ne "server") {
     Test-Command "code" "Visual Studio Code"
 }
+
+if ($DotfilesProfile -ne "server") {
+    Write-Host ""
+    Write-Host "--- GnuPG ---"
+    Test-Command "gpg" "GnuPG (Gpg4win)"
+}
 Test-Path-Exists "$env:LOCALAPPDATA\nvim" "Neovim config directory"
 
 Write-Host ""
@@ -154,7 +160,6 @@ Test-Command "less" "less"
 Test-Command "mo" "Mole"
 Test-Command "glow" "Glow"
 Test-Command "task" "Task"
-Test-Command "gpg" "GnuPG"
 Test-CommandOptional "lazygit" "Lazygit"
 
 Write-Host ""
