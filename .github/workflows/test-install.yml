@@ -19,8 +19,8 @@ jobs:
     name: Fedora (server profile)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
       - run: |
           docker build -f tests/docker/Dockerfile.fedora -t dotfiles-test-fedora .
           docker run --rm dotfiles-test-fedora
@@ -35,8 +35,8 @@ jobs:
         # Ansible become incompatibility cannot regress unnoticed.
         ubuntu_version: ['24.04', '26.04']
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
       - run: |
           docker build -f tests/docker/Dockerfile.ubuntu \
             --build-arg UBUNTU_VERSION=${{ matrix.ubuntu_version }} \
@@ -47,8 +47,8 @@ jobs:
     name: Debian (server profile)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
       - run: |
           docker build -f tests/docker/Dockerfile.debian -t dotfiles-test-debian .
           docker run --rm dotfiles-test-debian
@@ -57,7 +57,7 @@ jobs:
     name: macOS (server profile)
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install chezmoi and apply dotfiles (server profile)
         run: |
           mkdir -p "$HOME/.local/bin"
@@ -81,7 +81,7 @@ jobs:
       run:
         shell: pwsh
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
       - name: Install chezmoi
